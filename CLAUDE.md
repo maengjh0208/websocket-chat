@@ -51,11 +51,11 @@ WebSocket 관련 코드나 개념이 나올 때마다:
 > **규칙:** Task가 완료되면 아래 체크박스를 체크하고, "마지막 작업" 줄을 업데이트한다.
 > 상세 진행 상황(단계별 체크박스)은 구현 계획 파일에서 확인.
 
-**마지막 작업:** 설계 완료, 구현 계획 완료 — Task 1부터 시작 필요
+**마지막 작업:** Task 1 완료 — Task 2 시작 필요
 
 ### Task 진행 현황
 
-- [ ] Task 1: 프로젝트 인프라 (docker-compose + Dockerfiles + 폴더 구조)
+- [x] Task 1: 프로젝트 인프라 (docker-compose + Dockerfiles + 폴더 구조)
 - [ ] Task 2: 백엔드 DB 모델 + FastAPI 앱 진입점
 - [ ] Task 3: JWT 인증 (회원가입 / 로그인)
 - [ ] Task 4: REST API — Users, Rooms, Messages
