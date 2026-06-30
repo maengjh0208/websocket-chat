@@ -1,5 +1,9 @@
 # WebSocket Chat — Implementation Plan
 
+> **새 대화에서 이 파일을 열면:** 아래 "현재 진행 상황"을 먼저 확인하고, 체크되지 않은 첫 번째 Task부터 이어서 진행한다.
+
+> **Task 완료 시:** 해당 Task의 모든 Step을 `- [x]` 로 체크하고, CLAUDE.md의 Task 현황도 함께 업데이트한다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** DM + 채팅방, JWT 인증, 타이핑 인디케이터, 온라인 상태, 읽음 확인을 지원하는 실시간 채팅 앱 구축
