@@ -100,7 +100,7 @@ websocket-chat/
 **Interfaces:**
 - Produces: `docker-compose up --build` 로 backend(8000), frontend(5173), db(5432) 세 서비스 실행
 
-- [ ] **Step 1: 루트 폴더 구조 생성**
+- [x] **Step 1: 루트 폴더 구조 생성**
 
 ```bash
 mkdir -p backend/app/core backend/app/db backend/app/schemas \
@@ -117,7 +117,7 @@ touch backend/app/__init__.py backend/app/core/__init__.py \
       backend/app/managers/__init__.py backend/tests/__init__.py
 ```
 
-- [ ] **Step 2: `.env.example` 작성**
+- [x] **Step 2: `.env.example` 작성**
 
 ```
 DATABASE_URL=postgresql+asyncpg://chat:chat@db:5432/chat
@@ -126,7 +126,7 @@ SECRET_KEY=change-me-in-production-use-openssl-rand-hex-32
 ACCESS_TOKEN_EXPIRE_DAYS=7
 ```
 
-- [ ] **Step 3: `docker-compose.yml` 작성**
+- [x] **Step 3: `docker-compose.yml` 작성**
 
 ```yaml
 version: "3.9"
@@ -179,7 +179,7 @@ volumes:
   pgdata:
 ```
 
-- [ ] **Step 4: `backend/requirements.txt` 작성**
+- [x] **Step 4: `backend/requirements.txt` 작성**
 
 ```
 fastapi==0.111.0
@@ -197,7 +197,7 @@ pytest-asyncio==0.23.8
 websockets==12.0
 ```
 
-- [ ] **Step 5: `backend/Dockerfile` 작성**
+- [x] **Step 5: `backend/Dockerfile` 작성**
 
 ```dockerfile
 FROM python:3.12-slim
@@ -207,7 +207,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 ```
 
-- [ ] **Step 6: `frontend/Dockerfile` 작성**
+- [x] **Step 6: `frontend/Dockerfile` 작성**
 
 ```dockerfile
 FROM node:20-alpine
@@ -217,7 +217,7 @@ RUN npm install
 COPY . .
 ```
 
-- [ ] **Step 7: `.gitignore` 업데이트**
+- [x] **Step 7: `.gitignore` 업데이트**
 
 ```
 .env
@@ -229,14 +229,14 @@ dist/
 .vite/
 ```
 
-- [ ] **Step 8: 빌드 확인**
+- [x] **Step 8: 빌드 확인**
 
 ```bash
 docker-compose build
 ```
 Expected: 에러 없이 세 이미지 빌드 완료
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add docker-compose.yml .env.example backend/Dockerfile backend/requirements.txt frontend/Dockerfile .gitignore
@@ -260,7 +260,7 @@ git commit -m "chore: 프로젝트 인프라 설정 (docker-compose, Dockerfiles
 - Produces: `User`, `Room`, `RoomMember`, `Message` SQLAlchemy 모델
 - Produces: `get_db()` AsyncSession 제너레이터
 
-- [ ] **Step 1: `backend/app/core/config.py` 작성**
+- [x] **Step 1: `backend/app/core/config.py` 작성**
 
 ```python
 from pydantic_settings import BaseSettings
@@ -276,7 +276,7 @@ class Settings(BaseSettings):
 settings = Settings()
 ```
 
-- [ ] **Step 2: `backend/app/db/models.py` 작성**
+- [x] **Step 2: `backend/app/db/models.py` 작성**
 
 ```python
 import uuid
@@ -320,7 +320,7 @@ class Message(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 ```
 
-- [ ] **Step 3: `backend/app/db/session.py` 작성**
+- [x] **Step 3: `backend/app/db/session.py` 작성**
 
 ```python
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
