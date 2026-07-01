@@ -453,7 +453,7 @@ docker-compose run --rm backend alembic upgrade head
 
 Expected: `alembic/versions/` 에 마이그레이션 파일 생성, 테이블 4개 생성
 
-- [ ] **Step 8: health 엔드포인트 테스트**
+- [x] **Step 8: health 엔드포인트 테스트**
 
 ```bash
 docker-compose up -d
@@ -462,7 +462,7 @@ curl http://localhost:8000/health
 
 Expected: `{"status":"ok"}`
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add backend/
