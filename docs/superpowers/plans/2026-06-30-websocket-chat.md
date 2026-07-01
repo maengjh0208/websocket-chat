@@ -487,7 +487,7 @@ git commit -m "feat(backend): DB 모델, Alembic 마이그레이션, FastAPI 앱
 - Produces: `POST /auth/login` → `{access_token, token_type}`
 - Produces: `get_current_user(token) -> User` (의존성 주입용)
 
-- [ ] **Step 1: `backend/app/core/security.py` 작성**
+- [x] **Step 1: `backend/app/core/security.py` 작성**
 
 ```python
 from datetime import datetime, timedelta
@@ -512,7 +512,7 @@ def decode_token(token: str) -> str:
     return payload["sub"]
 ```
 
-- [ ] **Step 2: `backend/app/schemas/auth.py` 작성**
+- [x] **Step 2: `backend/app/schemas/auth.py` 작성**
 
 ```python
 from pydantic import BaseModel, EmailStr
@@ -531,7 +531,7 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 ```
 
-- [ ] **Step 3: `backend/app/api/deps.py` 작성**
+- [x] **Step 3: `backend/app/api/deps.py` 작성**
 
 ```python
 from fastapi import Depends, HTTPException
