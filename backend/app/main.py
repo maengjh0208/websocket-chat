@@ -1,0 +1,17 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(title="WebSocket Chat")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # 이 출처에서 온 요청만 허용
+    allow_credentials=True,  # 쿠키/Authorization 헤더 허용
+    allow_methods=["*"],  # GET, POST, PUT, DELETE 등 모두 허용
+    allow_headers=["*"],  # 모든 요청 헤더 허용 (Authorization 포함)
+)
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
