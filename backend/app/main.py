@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.error_handlers import register_exception_handlers
+
 app = FastAPI(title="WebSocket Chat")
 
 app.add_middleware(
@@ -10,6 +12,8 @@ app.add_middleware(
     allow_methods=["*"],  # GET, POST, PUT, DELETE 등 모두 허용
     allow_headers=["*"],  # 모든 요청 헤더 허용 (Authorization 포함)
 )
+
+register_exception_handlers(app)
 
 
 @app.get("/health")
