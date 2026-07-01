@@ -334,7 +334,7 @@ async def get_db():
         yield session
 ```
 
-- [ ] **Step 4: `backend/app/main.py` 작성**
+- [x] **Step 4: `backend/app/main.py` 작성**
 
 ```python
 from fastapi import FastAPI
@@ -355,7 +355,7 @@ async def health():
     return {"status": "ok"}
 ```
 
-- [ ] **Step 5: `backend/alembic.ini` 작성**
+- [x] **Step 5: `backend/alembic.ini` 작성**
 
 ```ini
 [alembic]
@@ -397,7 +397,7 @@ format = %(levelname)-5.5s [%(name)s] %(message)s
 datefmt = %H:%M:%S
 ```
 
-- [ ] **Step 6: `backend/alembic/env.py` 작성**
+- [x] **Step 6: `backend/alembic/env.py` 작성**
 
 ```python
 import asyncio
@@ -442,7 +442,7 @@ else:
     asyncio.run(run_migrations_online())
 ```
 
-- [ ] **Step 7: 초기 마이그레이션 생성 (DB 컨테이너 실행 필요)**
+- [x] **Step 7: 초기 마이그레이션 생성 (DB 컨테이너 실행 필요)**
 
 ```bash
 docker-compose up -d db

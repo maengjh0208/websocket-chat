@@ -21,7 +21,7 @@ WebSocket 관련 코드나 개념이 나올 때마다:
 
 ## 진행 상황
 
-- 다음 시작 지점: Task 2 — Step 4 (`backend/app/main.py`)
+- 다음 시작 지점: Task 2 — Step 8 (`health` 엔드포인트 테스트)
 - 설계 문서: `docs/superpowers/specs/2026-06-30-websocket-chat-design.md`
 - 구현 계획 (상세 체크박스): `docs/superpowers/plans/2026-06-30-websocket-chat.md`
 - 새 대화에서 재개 시 위 문서의 구현 계획 문서를 먼저 확인할 것
