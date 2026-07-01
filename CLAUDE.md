@@ -21,8 +21,9 @@ WebSocket 관련 코드나 개념이 나올 때마다:
 
 ## 진행 상황
 
-- 다음 시작 지점: Task 3 — Step 4 (`backend/app/api/routes/auth.py`)
-- 추가 완료 (원래 계획 외): `core/exceptions.py`, `core/error_handlers.py`, `app/domain/user.py`, `app/crud/user.py`
+- 다음 시작 지점: Task 3 — Step 5 (`backend/app/main.py`에 auth 라우터 등록)
+- 추가 완료 (원래 계획 외): `core/exceptions.py`, `core/error_handlers.py`, `app/domain/user.py`, `app/crud/user.py`, `app/services/auth.py`
+- 아키텍처: Router → Service → CRUD → Domain Entity 레이어 구조로 구현
 - deps.py는 커스텀 예외 + UserEntity 기반으로 리팩토링 완료
 - 설계 문서: `docs/superpowers/specs/2026-06-30-websocket-chat-design.md`
 - 구현 계획 (상세 체크박스): `docs/superpowers/plans/2026-06-30-websocket-chat.md`

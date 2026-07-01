@@ -560,7 +560,9 @@ async def get_current_user(
     return user
 ```
 
-- [ ] **Step 4: `backend/app/api/routes/auth.py` 작성**
+- [x] **Step 4: `backend/app/api/routes/auth.py` 작성**
+  - 추가 완료 (원래 계획 외): `app/services/auth.py` — 비즈니스 로직을 서비스 레이어로 분리
+  - Router는 HTTP 관심사만 담당, Service는 비즈니스 로직, CRUD는 DB 접근으로 레이어 구분
 
 ```python
 from fastapi import APIRouter, Depends, HTTPException
