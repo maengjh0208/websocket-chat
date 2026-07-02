@@ -6,12 +6,12 @@ from app.core.security import create_access_token, hash_password, verify_passwor
 
 
 async def register(username: str, email: str, password: str, session: AsyncSession) -> str:
-    if await crud_user.get_by_email(session, email):
+    if await crud_user.get_user_by_email(session, email):
         raise BadRequestError(error_code=ErrorCode.EMAIL_ALREADY_EXISTS)
 
     hashed_password = hash_password(password)
 
-    user = await crud_user.create(
+    user = await crud_user.create_user(
         session=session,
         username=username,
         email=email,
@@ -22,7 +22,7 @@ async def register(username: str, email: str, password: str, session: AsyncSessi
 
 
 async def login(email: str, password: str, session: AsyncSession) -> str:
-    user = await crud_user.get_by_email(session, email)
+    user = await crud_user.get_user_by_email(session, email)
     if not user:
         raise UnauthorizedError(error_code=ErrorCode.INVALID_CREDENTIALS, detail="이메일 또는 비밀번호가 올바르지 않음")
 

@@ -11,7 +11,7 @@ from app.db.session import get_db
 router = APIRouter(prefix="/auth")
 
 
-# POST /auth/register
+# POST /auth/register - 회원 가입
 @router.post(
     "/register",
     response_model=TokenResponse,
@@ -29,7 +29,7 @@ async def register(req: RegisterRequest, session: Annotated[AsyncSession, Depend
     return TokenResponse(access_token=access_token)
 
 
-# POST /auth/login
+# POST /auth/login - 로그인
 @router.post(
     "/login",
     response_model=TokenResponse,

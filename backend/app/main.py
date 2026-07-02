@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.error_handlers import register_exception_handlers
 from app.api.routes.auth import router as auth_router
+from app.api.routes.users import router as users_router
 
 app = FastAPI(title="WebSocket Chat")
 
@@ -17,6 +18,7 @@ app.add_middleware(
 register_exception_handlers(app)
 
 app.include_router(auth_router)
+app.include_router(users_router)
 
 
 @app.get("/health")
