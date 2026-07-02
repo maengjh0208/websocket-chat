@@ -599,7 +599,7 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     return TokenResponse(access_token=create_access_token(str(user.id)))
 ```
 
-- [ ] **Step 5: `backend/app/main.py` 에 auth 라우터 등록**
+- [x] **Step 5: `backend/app/main.py` 에 auth 라우터 등록**
 
 ```python
 from fastapi import FastAPI
@@ -623,7 +623,7 @@ async def health():
     return {"status": "ok"}
 ```
 
-- [ ] **Step 6: `backend/tests/conftest.py` 작성**
+- [x] **Step 6: `backend/tests/conftest.py` 작성**
 
 ```python
 import os
@@ -662,7 +662,7 @@ async def client(db):
     app.dependency_overrides.clear()
 ```
 
-- [ ] **Step 7: `backend/tests/test_auth.py` 작성 (실패 확인용)**
+- [x] **Step 7: `backend/tests/test_auth.py` 작성 (실패 확인용)**
 
 ```python
 import pytest
@@ -706,7 +706,7 @@ async def test_login_wrong_password(client):
     assert res.status_code == 401
 ```
 
-- [ ] **Step 8: test_chat DB 생성 후 테스트 실행**
+- [x] **Step 8: test_chat DB 생성 후 테스트 실행**
 
 ```bash
 # test_chat DB 생성 (최초 1회)
@@ -726,7 +726,7 @@ tests/test_auth.py::test_login_wrong_password PASSED
 4 passed
 ```
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add backend/
