@@ -90,3 +90,15 @@ async def create_dm(session: AsyncSession, user_id: UUID, target_id: UUID) -> Ro
             created_by=new_room.created_by,
             created_at=new_room.created_at,
         )
+
+
+async def is_room_member(session: AsyncSession, user_id: UUID, room_id: UUID) -> bool:
+    query = select(RoomMember).where(
+        RoomMember.user_id == user_id,
+        RoomMember.room_id == room_id,
+    )
+
+    result = await session.execute(query)
+    row = result.scalar_one_or_none()
+
+    return row is not None

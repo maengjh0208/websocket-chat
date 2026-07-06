@@ -2,11 +2,13 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
+from app.domain.user import UserEntity
+
 
 @dataclass
-class RoomEntity:
+class MessageEntity:
     id: UUID
-    name: str
-    is_dm: bool
-    created_by: UUID
+    room_id: UUID
+    sender: UserEntity
+    content: str
     created_at: datetime
