@@ -1081,7 +1081,7 @@ git commit -m "feat(backend): Users/Rooms/Messages REST API 구현"
 - Produces: `manager.broadcast_to_users(user_ids, payload, exclude_user_id)` — 여러 유저에게 전송
 - Produces: `manager` 싱글턴 인스턴스
 
-- [ ] **Step 1: `backend/app/managers/connection.py` 작성**
+- [x] **Step 1: `backend/app/managers/connection.py` 작성**
 
 ```python
 import json
@@ -1119,7 +1119,7 @@ class ConnectionManager:
 manager = ConnectionManager()
 ```
 
-- [ ] **Step 2: `backend/tests/test_websocket.py` 작성**
+- [x] **Step 2: `backend/tests/test_websocket.py` 작성** (실제 위치: `tests/unit/test_websocket.py`, UUID 타입 사용, send_json 사용)
 
 ```python
 import pytest
@@ -1174,7 +1174,7 @@ async def test_broadcast_excludes_sender():
     assert len(ws2.sent) == 1
 ```
 
-- [ ] **Step 3: 테스트 실행**
+- [x] **Step 3: 테스트 실행**
 
 ```bash
 docker-compose run --rm backend pytest tests/test_websocket.py -v
@@ -1182,7 +1182,7 @@ docker-compose run --rm backend pytest tests/test_websocket.py -v
 
 Expected: 4 passed
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/app/managers/ backend/tests/test_websocket.py

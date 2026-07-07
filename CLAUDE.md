@@ -21,7 +21,7 @@ WebSocket 관련 코드나 개념이 나올 때마다:
 
 ## 진행 상황
 
-- 다음 시작 지점: Task 5 — WebSocket ConnectionManager (`backend/app/managers/connection.py`)
+- 다음 시작 지점: Task 6 — WebSocket 엔드포인트 (`backend/app/api/websocket.py`)
 - Task 3 완료: JWT 인증 (register/login), 통합 테스트 5케이스 통과
 - Task 4 완료: REST API (Users, Rooms, Messages), 통합 테스트 9케이스 통과
   - `domain/`: user, room, message 엔티티
@@ -30,10 +30,13 @@ WebSocket 관련 코드나 개념이 나올 때마다:
   - `api/routes/`: auth, users, rooms (GET /rooms, POST /rooms, POST /rooms/dm, GET /rooms/{id}/messages)
   - `tests/integration/`: test_auth.py (5개), test_rooms.py (4개)
   - `tests/integration/helpers.py`: auth_headers, register_and_get_token 헬퍼
+- Task 5 완료: WebSocket ConnectionManager (`backend/app/managers/connection.py`)
+  - connect, disconnect, is_online, send_to_user, broadcast_to_users 구현
+  - `tests/unit/test_websocket.py`: 단위 테스트 4케이스 통과
 - 추가 완료 (원래 계획 외): `core/exceptions.py`, `core/error_handlers.py`
 - 아키텍처: Router → Service → CRUD → Domain Entity 레이어 구조로 구현
 - Pydantic 스키마는 model_config 없이 사용 (CRUD에서 dataclass로 변환 후 전달하므로 from_attributes 불필요)
-- 테스트: `tests/integration/` 디렉토리 구조, conftest.py는 `tests/` 루트에 위치, 로컬에서 `make backend-test` 로 실행
+- 테스트: `tests/integration/` (통합), `tests/unit/` (단위) 디렉토리 구조, conftest.py는 `tests/` 루트에 위치, 로컬에서 `make backend-test` 로 실행
 - 설계 문서: `docs/superpowers/specs/2026-06-30-websocket-chat-design.md`
 - 구현 계획 (상세 체크박스): `docs/superpowers/plans/2026-06-30-websocket-chat.md`
 - 새 대화에서 재개 시 위 문서의 구현 계획 문서를 먼저 확인할 것
