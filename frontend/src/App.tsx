@@ -1,28 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/auth'
 import LoginForm from '@/components/auth/LoginForm'
 import RegisterForm from '@/components/auth/RegisterForm'
+import ChatLayout from '@/components/chat/ChatLayout'
 
 export default function App() {
-  const { isAuthenticated, user, logout } = useAuthStore()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const initUser = useAuthStore((s) => s.initUser)
   const [view, setView] = useState<'login' | 'register'>('login')
 
+  // 새로고침 시 localStorage 토큰으로 유저 정보 복원
+  useEffect(() => {
+    initUser()
+  }, [])
+
   if (isAuthenticated) {
-    return (
-      <div style={styles.center}>
-        <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
-            안녕하세요, <strong>{user?.username}</strong>님!
-          </p>
-          <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
-            채팅 UI는 Task 10에서 추가됩니다.
-          </p>
-          <button onClick={logout} style={styles.logoutButton}>
-            로그아웃
-          </button>
-        </div>
-      </div>
-    )
+    return <ChatLayout />
   }
 
   return (
@@ -43,14 +36,5 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     background: '#f3f4f6',
-  },
-  logoutButton: {
-    padding: '0.6rem 1.2rem',
-    background: '#ef4444',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 6,
-    fontSize: '1rem',
-    cursor: 'pointer',
   },
 }

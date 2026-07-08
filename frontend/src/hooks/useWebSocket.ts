@@ -6,7 +6,6 @@ const WS_URL = import.meta.env.VITE_WS_URL
 
 export function useWebSocket(token: string | null) {
   const wsRef = useRef<WebSocket | null>(null)
-  const { addMessage, setTyping, setOnline } = useChatStore()
 
   useEffect(() => {
     if (!token) return
@@ -21,6 +20,8 @@ export function useWebSocket(token: string | null) {
     }
 
     // 서버에서 메시지가 push될 때마다 실행
+    // onmessage는 React 렌더링 사이클 밖에서 실행되므로
+    // useChatStore()가 아닌 getState()로 최신 액션을 가져옴
     ws.onmessage = (event: MessageEvent) => {
       let payload: WSPayload
       try {
@@ -28,6 +29,8 @@ export function useWebSocket(token: string | null) {
       } catch {
         return
       }
+
+      const { addMessage, setTyping, setOnline } = useChatStore.getState()
 
       if (payload.type === 'message.new') {
         addMessage({
@@ -56,7 +59,7 @@ export function useWebSocket(token: string | null) {
     return () => {
       ws.close()
     }
-  }, [token, addMessage, setTyping, setOnline])
+  }, [token])
 
   // 메시지 전송 헬퍼들 — 내부적으로 ws.send()로 JSON 문자열을 서버에 push
   const sendMessage = useCallback((roomId: string, content: string) => {
