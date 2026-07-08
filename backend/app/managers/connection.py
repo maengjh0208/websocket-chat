@@ -26,7 +26,10 @@ class ConnectionManager:
         if websocket is None:
             return
 
-        await websocket.send_json(payload)
+        try:
+            await websocket.send_json(payload)
+        except Exception:
+            self.connections.pop(user_id, None)
 
     async def broadcast_to_users(
         self,
