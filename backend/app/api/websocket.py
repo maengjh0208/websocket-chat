@@ -64,7 +64,6 @@ async def websocket_endpoint(
         while True:
             # 클라이언트가 뭔가 보낼 때까지 여기서 블록됨. 코루틴이라 다른 요청을 막지 않음.
             raw = await websocket.receive_text()
-            print("3" * 100, flush=True)
 
             try:
                 payload = json.loads(raw)
