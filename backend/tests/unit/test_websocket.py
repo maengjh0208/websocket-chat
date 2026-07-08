@@ -34,7 +34,7 @@ async def test_disconnect():
 
     websocket = FakeWS()
     connection_manager.connect(user_id, websocket)
-    connection_manager.disconnect(user_id)
+    connection_manager.disconnect(user_id, websocket)
 
     assert connection_manager.is_online(user_id) is False
 

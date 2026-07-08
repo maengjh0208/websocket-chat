@@ -11,9 +11,10 @@ class ConnectionManager:
         # 클라이언트가 WebSocket 연결을 맺으면 호출됨. DB나 네트워크 IO가 없으니까 동기(def)로도 충분.
         self.connections[user_id] = websocket
 
-    def disconnect(self, user_id: UUID) -> None:
+    def disconnect(self, user_id: UUID, websocket: WebSocket) -> None:
         # 브라우저를 닫거나 네트워크가 끊기면 호출됨
-        self.connections.pop(user_id, None)
+        if self.connections.get(user_id) is websocket:
+            self.connections.pop(user_id, None)
 
     def is_online(self, user_id: UUID) -> bool:
         # 접속 여부.

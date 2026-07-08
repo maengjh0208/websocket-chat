@@ -128,6 +128,8 @@ async def websocket_endpoint(
 
     # 클라이언트가 연결을 끊으면 WebSocketDisconnect 발생해서 except 로 빠짐
     except WebSocketDisconnect:
-        manager.disconnect(user.id)
-        async with get_session() as session:
-            await _broadcast_presence(session=session, user_id=user.id, status=PresenceStatus.OFFLINE)
+        manager.disconnect(user.id, websocket)
+
+        if not manager.is_online(user.id):
+            async with get_session() as session:
+                await _broadcast_presence(session=session, user_id=user.id, status=PresenceStatus.OFFLINE)
