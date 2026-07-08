@@ -35,3 +35,21 @@ async def get_users(
         )
         for user in users
     ]
+
+
+# GET /users/me - 자기 정보 조회
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    description="회원(본인) 정보 조회",
+)
+async def get_user_info(
+    current_user: Annotated[UserEntity, Depends(get_current_user)],
+):
+    return UserResponse(
+        id=current_user.id,
+        username=current_user.username,
+        email=current_user.email,
+        created_at=current_user.created_at,
+    )
