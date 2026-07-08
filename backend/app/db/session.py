@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncSession
 
 from app.core.config import settings
@@ -12,7 +14,8 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
-async def get_db():
+@asynccontextmanager
+async def get_session():
     async with AsyncSessionLocal() as session:
         try:
             yield session
@@ -21,3 +24,8 @@ async def get_db():
             await session.rollback()
             raise
         # session.close()는 async with가 알아서 처리.
+
+
+async def get_db():
+    async with get_session() as session:
+        yield session

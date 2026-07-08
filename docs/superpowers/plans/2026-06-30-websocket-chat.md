@@ -1384,7 +1384,7 @@ docker-compose up -d
 - Produces: `typing.start` / `typing.stop` → `typing.indicator` 브로드캐스트
 - Produces: `read.update` → DB `last_read_at` 업데이트
 
-- [ ] **Step 1: `websocket.py` 의 while 루프에 타이핑/읽음 핸들러 추가**
+- [x] **Step 1: `websocket.py` 의 while 루프에 타이핑/읽음 핸들러 추가**
 
 `if msg_type == "message.send":` 블록 아래에 추가:
 
@@ -1418,7 +1418,7 @@ docker-compose up -d
                     await db.commit()
 ```
 
-- [ ] **Step 2: 타이핑 단위 테스트 추가 (`tests/test_websocket.py`)**
+- [x] **Step 2: 타이핑 단위 테스트 추가 (`tests/test_websocket.py`)**
 
 ```python
 @pytest.mark.asyncio
@@ -1441,7 +1441,7 @@ async def test_typing_broadcast():
     assert json.loads(ws2.sent[0])["is_typing"] is True
 ```
 
-- [ ] **Step 3: 테스트 실행**
+- [x] **Step 3: 테스트 실행**
 
 ```bash
 docker-compose run --rm backend pytest tests/test_websocket.py -v
@@ -1449,12 +1449,14 @@ docker-compose run --rm backend pytest tests/test_websocket.py -v
 
 Expected: 5 passed
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit** (실제 커밋 메시지: `feat(backend): 타이핑 인디케이터, 읽음 확인 WebSocket 핸들러 추가`)
 
-```bash
-git add backend/app/api/websocket.py backend/tests/test_websocket.py
-git commit -m "feat(backend): 타이핑 인디케이터, 읽음 확인 WebSocket 핸들러"
-```
+> **실제 구현 참고:**
+> - `core/enums.py`: TYPING_START, TYPING_STOP, TYPING_INDICATOR, READ_UPDATE 추가
+> - `crud/room.py`: update_last_read_at 추가 (UPDATE WHERE 단일 쿼리, rowcount로 성공 여부 반환)
+> - `db/session.py`: get_session() asynccontextmanager 추가, get_db()가 재사용하도록 리팩터
+> - `api/websocket.py`: Depends(get_db) 제거, 메시지마다 get_session() 사용으로 DB 커넥션 풀 효율화
+> - Postman으로 수동 테스트 완료 (typing.start 발신 확인)
 
 ---
 

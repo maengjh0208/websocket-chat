@@ -1,6 +1,7 @@
+from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import intersect, select
+from sqlalchemy import intersect, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Room, RoomMember
@@ -122,3 +123,16 @@ async def get_peer_user_ids(session: AsyncSession, user_id: UUID) -> list[UUID]:
     )
 
     return list(result.scalars().all())
+
+
+async def update_last_read_at(session: AsyncSession, room_id: UUID, user_id: UUID) -> bool:
+    query = (
+        update(RoomMember)
+        .where(RoomMember.user_id == user_id, RoomMember.room_id == room_id)
+        .values(last_read_at=datetime.now(timezone.utc))
+    )
+
+    result = await session.execute(query)
+    await session.flush()
+
+    return result.rowcount > 0

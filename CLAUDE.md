@@ -21,7 +21,13 @@ WebSocket 관련 코드나 개념이 나올 때마다:
 
 ## 진행 상황
 
-- 다음 시작 지점: Task 7 — WebSocket 실시간 기능 (타이핑, 읽음 확인)
+- 다음 시작 지점: Task 8 — 프론트엔드 기반 설정 (React + Vite + TypeScript + Zustand)
+- Task 7 완료: WebSocket 실시간 기능
+  - `core/enums.py`: TYPING_START, TYPING_STOP, TYPING_INDICATOR, READ_UPDATE ENUM 추가
+  - `crud/room.py`: update_last_read_at 추가 (UPDATE WHERE 단일 쿼리, rowcount 반환)
+  - `db/session.py`: get_session() asynccontextmanager 추가, get_db()가 재사용하도록 리팩터
+  - `api/websocket.py`: 메시지마다 get_session() 사용으로 DB 커넥션 풀 효율화, typing/read 핸들러 추가
+  - Postman으로 수동 테스트 완료 (typing.start 발신 확인)
 - Task 3 완료: JWT 인증 (register/login), 통합 테스트 5케이스 통과
 - Task 4 완료: REST API (Users, Rooms, Messages), 통합 테스트 9케이스 통과
   - `domain/`: user, room, message 엔티티
