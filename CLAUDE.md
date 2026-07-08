@@ -21,7 +21,27 @@ WebSocket 관련 코드나 개념이 나올 때마다:
 
 ## 진행 상황
 
-- 다음 시작 지점: Task 8 — 프론트엔드 기반 설정 (React + Vite + TypeScript + Zustand)
+- 다음 시작 지점: Task 13 — CI/CD (GitHub Actions) + PWA (선택)
+- Task 12 완료: 프론트엔드 실시간 기능 통합
+  - `CreateRoomModal`: 채팅방 만들기 / DM 시작 탭 모달
+  - `Sidebar`: + 버튼으로 모달 열기, 방 아이콘 (#/👤), 내 온라인 상태 점 표시
+  - `ChatLayout`: activeRoomId를 로컬 state → Zustand store로 통합
+  - 두 브라우저(일반 + 시크릿)로 DM 실시간 채팅 테스트 완료
+- Task 11 완료: 프론트엔드 Chat UI
+  - `Sidebar`, `ChatWindow`, `MessageBubble`, `MessageInput`, `TypingIndicator`, `ChatLayout` 컴포넌트
+  - 실시간 메시지 미표시 버그 수정: useWebSocket onmessage에서 getState() 사용
+  - 새로고침 시 자동 로그아웃 버그 수정: initUser() 추가
+- Task 10 완료: useWebSocket 훅 (`frontend/src/hooks/useWebSocket.ts`)
+  - token을 쿼리 파라미터로 WebSocket 연결
+  - onmessage: message.new → addMessage, typing.indicator → setTyping, presence.update → setOnline
+  - sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate 헬퍼 반환
+- Task 9 완료: 프론트엔드 Auth UI
+  - `LoginForm`, `RegisterForm` 컴포넌트
+  - `GET /users/me` 백엔드 엔드포인트 추가
+- Task 8 완료: 프론트엔드 기반 설정
+  - package.json, tsconfig.json, vite.config.ts, index.html
+  - `src/types/index.ts`, `src/api/client.ts` (axios + auth 인터셉터)
+  - `src/store/auth.ts` (useAuthStore), `src/store/chat.ts` (useChatStore)
 - Task 7 완료: WebSocket 실시간 기능
   - `core/enums.py`: TYPING_START, TYPING_STOP, TYPING_INDICATOR, READ_UPDATE ENUM 추가
   - `crud/room.py`: update_last_read_at 추가 (UPDATE WHERE 단일 쿼리, rowcount 반환)
