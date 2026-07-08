@@ -1203,7 +1203,7 @@ git commit -m "feat(backend): WebSocket ConnectionManager 구현"
 - Produces: `ws://서버/ws?token=...` WebSocket 엔드포인트
 - Produces: `message.send` → DB 저장 + 방 멤버에게 `message.new` 브로드캐스트
 
-- [ ] **Step 1: `backend/app/api/websocket.py` 작성**
+- [x] **Step 1: `backend/app/api/websocket.py` 작성**
 
 ```python
 import json
@@ -1314,7 +1314,7 @@ async def websocket_endpoint(
         await _broadcast_presence(db, user, "offline")
 ```
 
-- [ ] **Step 2: `backend/app/main.py` 에 WebSocket 라우터 등록**
+- [x] **Step 2: `backend/app/main.py` 에 WebSocket 라우터 등록**
 
 ```python
 from app.api import websocket as ws_router
@@ -1322,7 +1322,7 @@ from app.api import websocket as ws_router
 app.include_router(ws_router.router)
 ```
 
-- [ ] **Step 3: `backend/tests/test_websocket.py` 에 통합 테스트 추가**
+- [x] **Step 3: `backend/tests/test_websocket.py` 에 통합 테스트 추가**
 
 ```python
 # 기존 단위 테스트 아래에 추가
@@ -1355,7 +1355,7 @@ async def test_ws_rejects_invalid_token(http_client):
 
 > **참고:** WebSocket 통합 테스트는 실제 서버가 실행 중이어야 함. CI에서는 `docker-compose up -d backend` 후 실행.
 
-- [ ] **Step 4: 수동 테스트 (서버 실행 후)**
+- [x] **Step 4: 수동 테스트 (서버 실행 후)**
 
 ```bash
 docker-compose up -d
@@ -1363,12 +1363,14 @@ docker-compose up -d
 # npx wscat -c "ws://localhost:8000/ws?token=<JWT_TOKEN>"
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit** (실제 커밋 메시지: `feat(backend): WebSocket 엔드포인트 구현 (메시지 전송/브로드캐스트, presence)`)
 
-```bash
-git add backend/
-git commit -m "feat(backend): WebSocket 엔드포인트 + 메시지 전송/브로드캐스트"
-```
+> **실제 구현 참고:**
+> - 플랜의 직접 DB 쿼리 대신 CRUD 레이어 사용 (프로젝트 아키텍처 일관성)
+> - `crud/room.py`: `get_room_member_ids`, `get_peer_user_ids` 추가
+> - `crud/message.py`: `create_message` 추가 (tuple 반환: message.id, created_at)
+> - `core/enums.py`: `WSCloseCode`, `PresenceStatus`, `WSMessageType` ENUM 추가
+> - Postman으로 수동 테스트 완료 (message.new 수신 확인)
 
 ---
 

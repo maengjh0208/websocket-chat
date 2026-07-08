@@ -21,7 +21,7 @@ WebSocket 관련 코드나 개념이 나올 때마다:
 
 ## 진행 상황
 
-- 다음 시작 지점: Task 6 — WebSocket 엔드포인트 (`backend/app/api/websocket.py`)
+- 다음 시작 지점: Task 7 — WebSocket 실시간 기능 (타이핑, 읽음 확인)
 - Task 3 완료: JWT 인증 (register/login), 통합 테스트 5케이스 통과
 - Task 4 완료: REST API (Users, Rooms, Messages), 통합 테스트 9케이스 통과
   - `domain/`: user, room, message 엔티티
@@ -33,7 +33,14 @@ WebSocket 관련 코드나 개념이 나올 때마다:
 - Task 5 완료: WebSocket ConnectionManager (`backend/app/managers/connection.py`)
   - connect, disconnect, is_online, send_to_user, broadcast_to_users 구현
   - `tests/unit/test_websocket.py`: 단위 테스트 4케이스 통과
-- 추가 완료 (원래 계획 외): `core/exceptions.py`, `core/error_handlers.py`
+- Task 6 완료: WebSocket 엔드포인트 (`backend/app/api/websocket.py`)
+  - JWT 인증 → 연결 수락 → 메시지 수신 루프 → DB 저장 → 브로드캐스트
+  - presence 브로드캐스트 (_broadcast_presence: 공통 방 멤버에게 online/offline 알림)
+  - `crud/room.py`: get_room_member_ids, get_peer_user_ids 추가
+  - `crud/message.py`: create_message 추가 (message.id, created_at 반환)
+  - `core/enums.py`: WSCloseCode, PresenceStatus, WSMessageType ENUM 추가
+  - Postman으로 수동 테스트 완료 (message.new 수신 확인)
+- 추가 완료 (원래 계획 외): `core/exceptions.py`, `core/error_handlers.py`, `core/enums.py`
 - 아키텍처: Router → Service → CRUD → Domain Entity 레이어 구조로 구현
 - Pydantic 스키마는 model_config 없이 사용 (CRUD에서 dataclass로 변환 후 전달하므로 from_attributes 불필요)
 - 테스트: `tests/integration/` (통합), `tests/unit/` (단위) 디렉토리 구조, conftest.py는 `tests/` 루트에 위치, 로컬에서 `make backend-test` 로 실행
