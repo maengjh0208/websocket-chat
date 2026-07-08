@@ -40,7 +40,6 @@ async def websocket_endpoint(
     # WebSocket은 HTTP 헤더를 자유롭게 설정하기 어려움. 따라서 JWT를 쿼리 파라미터로 받음
     token: Annotated[str, Query(..., description="JWT Token")],
 ):
-    print("1" * 100, flush=True)
     # JWT 인증
     try:
         user_id_str = decode_token(token)
@@ -50,7 +49,6 @@ async def websocket_endpoint(
         return
 
     async with get_session() as session:
-        print("2" * 100, flush=True)
         user = await crud_user.get_user_by_id(session, user_id_str)
         if not user:
             await websocket.close(code=WSCloseCode.UNAUTHORIZED)
@@ -74,7 +72,6 @@ async def websocket_endpoint(
                 continue
 
             async with get_session() as session:
-                print("4" * 100, flush=True)
                 msg_type = payload.get("type")
 
                 if msg_type == WSMessageType.MESSAGE_SEND:
@@ -107,7 +104,6 @@ async def websocket_endpoint(
                         },
                     )
                 elif msg_type in (WSMessageType.TYPING_START, WSMessageType.TYPING_STOP):
-                    print("5" * 100, flush=True)
                     room_id = UUID(payload["room_id"])
                     is_typing = msg_type == WSMessageType.TYPING_START
                     member_ids = await crud_room.get_room_member_ids(session, room_id)
@@ -123,7 +119,6 @@ async def websocket_endpoint(
                         exclude_user_id=user.id,
                     )
                 elif msg_type == WSMessageType.READ_UPDATE:
-                    print("6" * 100, flush=True)
                     room_id = UUID(payload["room_id"])
 
                     await crud_room.update_last_read_at(
