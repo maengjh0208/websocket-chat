@@ -102,3 +102,23 @@ async def is_room_member(session: AsyncSession, user_id: UUID, room_id: UUID) ->
     row = result.scalar_one_or_none()
 
     return row is not None
+
+
+async def get_room_member_ids(session: AsyncSession, room_id: UUID) -> list[UUID]:
+    query = select(RoomMember.user_id).where(RoomMember.room_id == room_id)
+    result = await session.execute(query)
+
+    return list(result.scalars().all())
+
+
+async def get_peer_user_ids(session: AsyncSession, user_id: UUID) -> list[UUID]:
+    my_rooms = select(RoomMember.room_id).where(RoomMember.user_id == user_id)
+
+    result = await session.execute(
+        select(RoomMember.user_id)
+        .where(RoomMember.room_id.in_(my_rooms))
+        .where(RoomMember.user_id != user_id)
+        .distinct()
+    )
+
+    return list(result.scalars().all())

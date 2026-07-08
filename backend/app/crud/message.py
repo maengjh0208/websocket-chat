@@ -44,3 +44,13 @@ async def get_messages_by_room(session: AsyncSession, room_id: UUID, limit: int 
         )
         for row in rows
     ][::-1]
+
+
+async def create_message(
+    session: AsyncSession, room_id: UUID, user_id: UUID, content: str
+) -> tuple:  # (UUID, datetime)
+    message = Message(room_id=room_id, sender_id=user_id, content=content)
+    session.add(message)
+    await session.flush()
+
+    return message.id, message.created_at
