@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import { useAuthStore } from '@/store/auth'
+import { useChatStore } from '@/store/chat'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import Sidebar from './Sidebar'
 import ChatWindow from './ChatWindow'
@@ -8,13 +9,14 @@ import ChatWindow from './ChatWindow'
 // token이 바뀌면(로그아웃 등) useEffect가 재실행되어 연결을 새로 맺음
 export default function ChatLayout() {
   const token = useAuthStore((s) => s.token)
-  const [activeRoomId, setActiveRoomId] = useState<string | null>(null)
+  const activeRoomId = useChatStore((s) => s.activeRoomId)
+  const setActiveRoom = useChatStore((s) => s.setActiveRoom)
 
   const { sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate } = useWebSocket(token)
 
   const handleSelectRoom = useCallback((roomId: string) => {
-    setActiveRoomId(roomId)
-  }, [])
+    setActiveRoom(roomId)
+  }, [setActiveRoom])
 
   const handleSendMessage = useCallback(
     (content: string) => {
@@ -49,7 +51,7 @@ export default function ChatLayout() {
           />
         ) : (
           <div style={styles.placeholder}>
-            <p>왼쪽에서 채팅방을 선택하세요.</p>
+            <p>왼쪽 + 버튼으로 채팅방을 만들거나 선택하세요.</p>
           </div>
         )}
       </div>
@@ -61,10 +63,7 @@ const styles: Record<string, React.CSSProperties> = {
   container: { display: 'flex', height: '100vh', overflow: 'hidden' },
   main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
   placeholder: {
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#9ca3af',
+    flex: 1, display: 'flex', alignItems: 'center',
+    justifyContent: 'center', color: '#9ca3af',
   },
 }
