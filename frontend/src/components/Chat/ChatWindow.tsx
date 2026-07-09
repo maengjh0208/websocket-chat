@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useChatStore } from '@/store/chat'
 import { useAuthStore } from '@/store/auth'
 import MessageBubble from './MessageBubble'
 import TypingIndicator from './TypingIndicator'
 import MessageInput from './MessageInput'
+import InviteMemberModal from './InviteMemberModal'
 
 interface Props {
   roomId: string
@@ -19,9 +20,11 @@ interface Props {
 export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTypingStop, onReadUpdate }: Props) {
   const messages = useChatStore((s) => s.messages[roomId] ?? [])
   const typing = useChatStore((s) => s.typing[roomId] ?? [])
+  const room = useChatStore((s) => s.rooms.find((r) => r.id === roomId))
   const { fetchMessages } = useChatStore()
   const { user } = useAuthStore()
   const bottomRef = useRef<HTMLDivElement>(null)
+  const [showInvite, setShowInvite] = useState(false)
 
   useEffect(() => {
     fetchMessages(roomId)
@@ -35,6 +38,15 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
 
   return (
     <div style={styles.container}>
+      <div style={styles.header}>
+        <span style={styles.roomName}>{room?.is_dm ? '👤' : '#'} {room?.name ?? ''}</span>
+        {!room?.is_dm && (
+          <button style={styles.inviteBtn} onClick={() => setShowInvite(true)}>
+            + 멤버 초대
+          </button>
+        )}
+      </div>
+
       <div style={styles.messageList}>
         {messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} isMe={msg.sender.id === user?.id} />
@@ -50,12 +62,26 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
           onTypingStop={onTypingStop}
         />
       </div>
+
+      {showInvite && (
+        <InviteMemberModal roomId={roomId} onClose={() => setShowInvite(false)} />
+      )}
     </div>
   )
 }
 
 const styles: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' },
+  header: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '0.75rem 1rem', borderBottom: '1px solid #e5e7eb',
+    flexShrink: 0,
+  },
+  roomName: { fontSize: '1rem', fontWeight: 600, color: '#111827' },
+  inviteBtn: {
+    padding: '0.35rem 0.75rem', background: '#4f46e5', color: '#fff',
+    border: 'none', borderRadius: 6, fontSize: '0.85rem', cursor: 'pointer',
+  },
   messageList: { flex: 1, overflowY: 'auto', padding: '1rem' },
   bottom: { flexShrink: 0, padding: '0 1rem' },
 }

@@ -12,5 +12,8 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    watch: {
+      usePolling: true, // macOS + Docker 환경에서 파일 변경 감지를 위해 필요
+    },
   },
 })
