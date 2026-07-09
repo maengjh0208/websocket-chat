@@ -11,10 +11,11 @@ interface Props {
 }
 
 export default function Sidebar({ onSelectRoom, activeRoomId }: Props) {
-  const { rooms, online, fetchRooms } = useChatStore()
+  const { rooms, online, fetchRooms, leaveRoom } = useChatStore()
   const { user, logout } = useAuthStore()
   const [showModal, setShowModal] = useState(false)
   const [users, setUsers] = useState<User[]>([])
+  const [hoveredRoomId, setHoveredRoomId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchRooms()
@@ -45,17 +46,32 @@ export default function Sidebar({ onSelectRoom, activeRoomId }: Props) {
 
       <div style={styles.roomList}>
         {rooms.map((room: Room) => (
-          <button
+          <div
             key={room.id}
-            onClick={() => onSelectRoom(room.id)}
-            style={{
-              ...styles.roomItem,
-              background: room.id === activeRoomId ? '#e0e7ff' : 'transparent',
-            }}
+            style={styles.roomWrapper}
+            onMouseEnter={() => setHoveredRoomId(room.id)}
+            onMouseLeave={() => setHoveredRoomId(null)}
           >
-            <span style={styles.roomIcon}>{room.is_dm ? '👤' : '#'}</span>
-            <span style={styles.roomName}>{getRoomLabel(room)}</span>
-          </button>
+            <button
+              onClick={() => onSelectRoom(room.id)}
+              style={{
+                ...styles.roomItem,
+                background: room.id === activeRoomId ? '#e0e7ff' : 'transparent',
+              }}
+            >
+              <span style={styles.roomIcon}>{room.is_dm ? '👤' : '#'}</span>
+              <span style={styles.roomName}>{getRoomLabel(room)}</span>
+            </button>
+            {hoveredRoomId === room.id && (
+              <button
+                onClick={() => leaveRoom(room.id)}
+                style={styles.leaveBtn}
+                title="방 나가기"
+              >
+                ×
+              </button>
+            )}
+          </div>
         ))}
         {rooms.length === 0 && (
           <p style={styles.empty}>+ 버튼으로 방을 만들어보세요.</p>
@@ -129,10 +145,17 @@ const styles: Record<string, React.CSSProperties> = {
   },
   statusDot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0 },
   userName: { fontSize: '0.875rem', color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  roomWrapper: {
+    display: 'flex', alignItems: 'center', marginBottom: '0.15rem',
+  },
   roomItem: {
-    width: '100%', textAlign: 'left', padding: '0.5rem 0.6rem',
+    flex: 1, textAlign: 'left', padding: '0.5rem 0.6rem',
     border: 'none', borderRadius: 6, cursor: 'pointer',
-    display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.15rem',
+    display: 'flex', alignItems: 'center', gap: '0.5rem',
+  },
+  leaveBtn: {
+    flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer',
+    color: '#9ca3af', fontSize: '1rem', padding: '0 4px', lineHeight: 1,
   },
   roomIcon: { fontSize: '0.85rem', flexShrink: 0 },
   roomName: { fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },

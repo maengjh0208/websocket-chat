@@ -20,6 +20,7 @@ interface ChatState {
   fetchRooms: () => Promise<void>
   setActiveRoom: (roomId: string) => void
   fetchMessages: (roomId: string) => Promise<void>
+  leaveRoom: (roomId: string) => Promise<void>
 
   // WebSocket 이벤트 수신 시 호출
   addMessage: (message: Message) => void
@@ -75,6 +76,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setOnline: (userId, status) => {
     set((state) => ({
       online: { ...state.online, [userId]: status === 'online' },
+    }))
+  },
+
+  leaveRoom: async (roomId) => {
+    await apiClient.delete(`/rooms/${roomId}/members/me`)
+    set((state) => ({
+      rooms: state.rooms.filter((r) => r.id !== roomId),
+      activeRoomId: state.activeRoomId === roomId ? null : state.activeRoomId,
+      messages: Object.fromEntries(Object.entries(state.messages).filter(([id]) => id !== roomId)),
     }))
   },
 }))

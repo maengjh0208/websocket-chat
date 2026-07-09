@@ -32,3 +32,8 @@ async def invite_members(user_id: UUID, target_id: UUID, room_id: UUID, session:
 
     if not await crud_room.is_room_member(session=session, user_id=target_id, room_id=room_id):
         await crud_room.add_room_member(session=session, user_id=target_id, room_id=room_id)
+
+
+async def leave_room(user_id: UUID, room_id: UUID, session: AsyncSession) -> None:
+    if not await crud_room.leave_room(session=session, user_id=user_id, room_id=room_id):
+        raise ForbiddenError(error_code=ErrorCode.NOT_ROOM_MEMBER)

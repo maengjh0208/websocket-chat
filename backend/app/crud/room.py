@@ -27,7 +27,14 @@ async def create_room(session: AsyncSession, name: str, created_by: UUID) -> Roo
 
 
 async def get_rooms_by_user(session: AsyncSession, user_id: UUID) -> list[RoomEntity]:
-    query = select(Room).join(RoomMember, Room.id == RoomMember.room_id).where(RoomMember.user_id == user_id)
+    query = (
+        select(Room)
+        .join(RoomMember, Room.id == RoomMember.room_id)
+        .where(
+            RoomMember.user_id == user_id,
+            RoomMember.left_at.is_(None),
+        )
+    )
 
     result = await session.execute(query)
     rooms = result.scalars().all()
@@ -97,6 +104,7 @@ async def is_room_member(session: AsyncSession, user_id: UUID, room_id: UUID) ->
     query = select(RoomMember).where(
         RoomMember.user_id == user_id,
         RoomMember.room_id == room_id,
+        RoomMember.left_at.is_(None),
     )
 
     result = await session.execute(query)
@@ -106,19 +114,28 @@ async def is_room_member(session: AsyncSession, user_id: UUID, room_id: UUID) ->
 
 
 async def get_room_member_ids(session: AsyncSession, room_id: UUID) -> list[UUID]:
-    query = select(RoomMember.user_id).where(RoomMember.room_id == room_id)
+    query = select(RoomMember.user_id).where(
+        RoomMember.room_id == room_id,
+        RoomMember.left_at.is_(None),
+    )
     result = await session.execute(query)
 
     return list(result.scalars().all())
 
 
 async def get_peer_user_ids(session: AsyncSession, user_id: UUID) -> list[UUID]:
-    my_rooms = select(RoomMember.room_id).where(RoomMember.user_id == user_id)
+    my_rooms = select(RoomMember.room_id).where(
+        RoomMember.user_id == user_id,
+        RoomMember.left_at.is_(None),
+    )
 
     result = await session.execute(
         select(RoomMember.user_id)
         .where(RoomMember.room_id.in_(my_rooms))
-        .where(RoomMember.user_id != user_id)
+        .where(
+            RoomMember.user_id != user_id,
+            RoomMember.left_at.is_(None),
+        )
         .distinct()
     )
 
@@ -139,6 +156,30 @@ async def update_last_read_at(session: AsyncSession, room_id: UUID, user_id: UUI
 
 
 async def add_room_member(session: AsyncSession, user_id: UUID, room_id: UUID) -> None:
-    room_member = RoomMember(room_id=room_id, user_id=user_id)
-    session.add(room_member)
+    # 기존에 그룹방을 나갔던 유저는 단순 재참여. 그게 아니면 새로 추가
+    result = await session.execute(
+        update(RoomMember)
+        .where(RoomMember.user_id == user_id, RoomMember.room_id == room_id, RoomMember.left_at.is_not(None))
+        .values(left_at=None)
+    )
     await session.flush()
+
+    if result.rowcount > 0:
+        return
+    else:
+        room_member = RoomMember(room_id=room_id, user_id=user_id)
+        session.add(room_member)
+        await session.flush()
+
+
+async def leave_room(session: AsyncSession, user_id: UUID, room_id: UUID) -> bool:
+    query = (
+        update(RoomMember)
+        .where(RoomMember.user_id == user_id, RoomMember.room_id == room_id, RoomMember.left_at.is_(None))
+        .values(left_at=datetime.now(timezone.utc))
+    )
+
+    result = await session.execute(query)
+    await session.flush()
+
+    return result.rowcount > 0

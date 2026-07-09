@@ -149,3 +149,21 @@ async def invite_members(
         room_id=room_id,
         session=session,
     )
+
+
+# DELETE /rooms/{room_id}/members/me - 그룹방에서 나가기
+@router.delete(
+    "/{room_id}/members/me",
+    status_code=status.HTTP_204_NO_CONTENT,
+    description="그룹방에서 나가기",
+)
+async def leave_room(
+    room_id: UUID,
+    current_user: Annotated[UserEntity, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db)],
+):
+    await room_service.leave_room(
+        user_id=current_user.id,
+        room_id=room_id,
+        session=session,
+    )
