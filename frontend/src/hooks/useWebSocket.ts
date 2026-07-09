@@ -55,8 +55,17 @@ export function useWebSocket(token: string | null) {
       console.error('[WS] 에러', e)
     }
 
+    // 2분마다 ping 전송 → 백엔드에서 Redis TTL 갱신
+    // 아무 활동이 없어도 presence 상태가 만료되지 않도록 유지
+    const pingInterval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'ping' }))
+      }
+    }, 2 * 60 * 1000)
+
     // 언마운트 시 연결 해제 (생명주기 끝)
     return () => {
+      clearInterval(pingInterval)
       ws.close()
     }
   }, [token])

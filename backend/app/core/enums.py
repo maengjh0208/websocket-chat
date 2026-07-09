@@ -11,6 +11,9 @@ class PresenceStatus(StrEnum):
 
 
 class WSMessageType(StrEnum):
+    PING = "ping"
+    PONG = "pong"
+
     MESSAGE_SEND = "message.send"
     MESSAGE_NEW = "message.new"
 
@@ -20,4 +23,4 @@ class WSMessageType(StrEnum):
     TYPING_STOP = "typing.stop"
     TYPING_INDICATOR = "typing.indicator"
 
-    READ_UPDATE = "read.update" # 클라이언트가 방을 열었을때 보내는 신호
+    READ_UPDATE = "read.update"  # 클라이언트가 방을 열었을때 보내는 신호

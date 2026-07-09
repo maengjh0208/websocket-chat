@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
+import apiClient from '@/api/client'
 import { useChatStore } from '@/store/chat'
 import { useAuthStore } from '@/store/auth'
 import CreateRoomModal from './CreateRoomModal'
-import type { Room } from '@/types'
+import type { Room, User } from '@/types'
 
 interface Props {
   onSelectRoom: (roomId: string) => void
@@ -13,14 +14,15 @@ export default function Sidebar({ onSelectRoom, activeRoomId }: Props) {
   const { rooms, online, fetchRooms } = useChatStore()
   const { user, logout } = useAuthStore()
   const [showModal, setShowModal] = useState(false)
+  const [users, setUsers] = useState<User[]>([])
 
   useEffect(() => {
     fetchRooms()
+    apiClient.get<User[]>('/users').then((res) => setUsers(res.data))
   }, [fetchRooms])
 
   const getRoomLabel = (room: Room) => {
     if (!room.is_dm) return room.name
-    // DM 방 이름에서 상대방 username 추출 ("dm-{uuid}-{uuid}" 형식)
     return room.name
   }
 
@@ -31,7 +33,7 @@ export default function Sidebar({ onSelectRoom, activeRoomId }: Props) {
           <span style={styles.onlineDot} />
           <span style={styles.username}>{user?.username}</span>
         </div>
-        <button onClick={logout} style={styles.logoutBtn}>나가기</button>
+        <button onClick={logout} style={styles.logoutBtn}>로그아웃</button>
       </div>
 
       <div style={styles.sectionHeader}>
@@ -57,6 +59,27 @@ export default function Sidebar({ onSelectRoom, activeRoomId }: Props) {
         ))}
         {rooms.length === 0 && (
           <p style={styles.empty}>+ 버튼으로 방을 만들어보세요.</p>
+        )}
+      </div>
+
+      <div style={styles.divider} />
+
+      <div style={styles.sectionHeader}>
+        <span style={styles.sectionLabel}>유저</span>
+      </div>
+
+      <div style={styles.userList}>
+        {users.map((u) => {
+          const isOnline = online[u.id] === true
+          return (
+            <div key={u.id} style={styles.userItem}>
+              <span style={{ ...styles.statusDot, background: isOnline ? '#22c55e' : '#d1d5db' }} />
+              <span style={styles.userName}>{u.username}</span>
+            </div>
+          )
+        })}
+        {users.length === 0 && (
+          <p style={styles.empty}>다른 유저가 없습니다.</p>
         )}
       </div>
 
@@ -97,7 +120,15 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'none', border: 'none', cursor: 'pointer',
     fontSize: '1.1rem', color: '#6b7280', lineHeight: 1, padding: '0 2px',
   },
-  roomList: { flex: 1, overflowY: 'auto', padding: '0.25rem 0.5rem' },
+  divider: { borderTop: '1px solid #e5e7eb', margin: '0.5rem 0' },
+  roomList: { overflowY: 'auto', padding: '0.25rem 0.5rem' },
+  userList: { flex: 1, overflowY: 'auto', padding: '0.25rem 0.5rem' },
+  userItem: {
+    display: 'flex', alignItems: 'center', gap: '0.5rem',
+    padding: '0.4rem 0.6rem', borderRadius: 6,
+  },
+  statusDot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0 },
+  userName: { fontSize: '0.875rem', color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   roomItem: {
     width: '100%', textAlign: 'left', padding: '0.5rem 0.6rem',
     border: 'none', borderRadius: 6, cursor: 'pointer',

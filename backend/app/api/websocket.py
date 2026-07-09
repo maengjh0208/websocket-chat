@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud import room as crud_room
 from app.crud import user as crud_user
 from app.crud import message as crud_message
+from app.managers import presence
 from app.managers.connection import manager
 from app.db.session import get_session
 from app.core.security import decode_token
@@ -17,20 +18,31 @@ from app.core.enums import PresenceStatus, WSCloseCode, WSMessageType
 router = APIRouter()
 
 
-async def _broadcast_presence(session: AsyncSession, user_id: UUID, status: str) -> None:
-    """
-    내가 접속할 때와 끊길 때, 나와 같은 방에 있는 다른 유저들에게 온라인/오프라인 상태를 알려줌
-    """
+async def _broadcast_presence(session: AsyncSession, user_id: UUID, status: str, is_reconnect: bool = False) -> None:
     peer_ids = await crud_room.get_peer_user_ids(session, user_id)
+    online_peer_ids = await presence.get_online_peer_ids(peer_ids)
 
+    # 내가 접속할 때와 끊길 때, 나와 같은 방에 있는 다른 유저들에게 온라인/오프라인 상태를 알려줌
     await manager.broadcast_to_users(
-        user_ids=peer_ids,
+        user_ids=online_peer_ids,
         payload={
             "type": WSMessageType.PRESENCE_UPDATE,
             "user_id": str(user_id),
             "status": status,
         },
     )
+
+    # 재연결 시 현재 온라인인 피어들의 상태를 나에게 전송
+    if is_reconnect:
+        for peer_id in online_peer_ids:
+            await manager.send_to_user(
+                user_id=user_id,
+                payload={
+                    "type": WSMessageType.PRESENCE_UPDATE,
+                    "user_id": str(peer_id),
+                    "status": PresenceStatus.ONLINE,
+                },
+            )
 
 
 # ws://서버/ws?token= 형태
@@ -57,7 +69,8 @@ async def websocket_endpoint(
         # 연결 수락 + ConnectionManager 등록
         await websocket.accept()
         manager.connect(user.id, websocket)
-        await _broadcast_presence(session=session, user_id=user.id, status=PresenceStatus.ONLINE)
+        await presence.set_online(user.id)
+        await _broadcast_presence(session=session, user_id=user.id, status=PresenceStatus.ONLINE, is_reconnect=True)
 
     try:
         # 연결이 살아있는 한 계속 메세지를 기다림
@@ -125,11 +138,16 @@ async def websocket_endpoint(
                         room_id=room_id,
                         user_id=user.id,
                     )
+                elif msg_type == WSMessageType.PING:
+                    await presence.set_online(user.id)
+                    await manager.send_to_user(user.id, {"type": WSMessageType.PONG})
 
     # 클라이언트가 연결을 끊으면 WebSocketDisconnect 발생해서 except 로 빠짐
     except WebSocketDisconnect:
         manager.disconnect(user.id, websocket)
 
         if not manager.is_online(user.id):
+            await presence.set_offline(user.id)
+
             async with get_session() as session:
                 await _broadcast_presence(session=session, user_id=user.id, status=PresenceStatus.OFFLINE)
