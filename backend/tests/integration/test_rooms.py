@@ -82,3 +82,30 @@ async def test_create_dm_idempotent(client):
 
     assert response_2.status_code == status.HTTP_201_CREATED
     assert response_1.json()["id"] == response_2.json()["id"]
+
+
+################################################################################################
+# POST /rooms/{room_id}/members 테스트
+################################################################################################
+@pytest.mark.asyncio
+async def test_invite_members_success(client):
+    # 유저
+    headers = await auth_headers(client=client, username="juhee", email="juhee@test.co.kr")
+
+    # target 유저
+    target_user_token = await register_and_get_token(
+        client=client, username="target_user", email="target_user@test.co.kr"
+    )
+
+    # 그룹 방 생성
+    group_room = await client.post("/rooms", json={"name": "group_room_1"}, headers=headers)
+    group_room_id = group_room.json()["id"]
+
+    # target 유저 초대
+    response = await client.post(
+        f"/rooms/{group_room_id}/members",
+        json={"user_id": decode_token(target_user_token)},
+        headers=headers,
+    )
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT

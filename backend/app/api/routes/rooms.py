@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.room import CreateDMRequest, CreateRoomRequest, RoomResponse
+from app.schemas.room import CreateDMRequest, CreateRoomRequest, InviteMemberRequest, RoomResponse
 from app.domain.user import UserEntity
 from app.api.deps import get_current_user
 from app.db.session import get_db
@@ -129,3 +129,23 @@ async def get_messages(
         )
         for message in messages
     ]
+
+
+# POST /rooms/{room_id}/members - 그룹방에 유저 초대
+@router.post(
+    "/{room_id}/members",
+    status_code=status.HTTP_204_NO_CONTENT,
+    description="그룹방에 유저 초대",
+)
+async def invite_members(
+    room_id: UUID,
+    req: InviteMemberRequest,
+    current_user: Annotated[UserEntity, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db)],
+):
+    await room_service.invite_members(
+        user_id=current_user.id,
+        target_id=req.user_id,
+        room_id=room_id,
+        session=session,
+    )

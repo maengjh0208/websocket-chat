@@ -18,3 +18,7 @@ class RoomResponse(BaseModel):
     is_dm: bool
     created_by: UUID
     created_at: datetime
+
+
+class InviteMemberRequest(BaseModel):
+    user_id: UUID

@@ -136,3 +136,9 @@ async def update_last_read_at(session: AsyncSession, room_id: UUID, user_id: UUI
     await session.flush()
 
     return result.rowcount > 0
+
+
+async def add_room_member(session: AsyncSession, user_id: UUID, room_id: UUID) -> None:
+    room_member = RoomMember(room_id=room_id, user_id=user_id)
+    session.add(room_member)
+    await session.flush()
