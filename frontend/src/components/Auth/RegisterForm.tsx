@@ -31,8 +31,7 @@ export default function RegisterForm({ onSwitchToLogin }: Props) {
   if (done) {
     return (
       <div style={styles.card}>
-        <h2 style={styles.title}>가입 완료!</h2>
-        <p style={{ textAlign: 'center', color: '#16a34a' }}>이제 로그인하세요.</p>
+        <h2 style={styles.title}>가입 완료</h2>
         <button onClick={onSwitchToLogin} style={{ ...styles.button, marginTop: '1rem' }}>
           로그인하러 가기
         </button>

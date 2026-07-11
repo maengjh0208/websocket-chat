@@ -2597,6 +2597,13 @@ GitHub → Actions 탭에서 워크플로 실행 확인
 
 ---
 
+> **Task 14 이후 작업은 별도 파일을 참고한다:**
+> [`docs/superpowers/plans/2026-07-11-advanced-features.md`](./2026-07-11-advanced-features.md)
+> — Task 14 (Presence 개선), Task 15 (친구 목록), Task 16 (Redis Pub/Sub + Nginx 다중 서버)
+
+---
+
+
 ## 완료 기준
 
 - [x] `docker-compose up` 으로 세 서비스(백엔드, 프론트, DB) 정상 실행

@@ -21,7 +21,7 @@ WebSocket 관련 코드나 개념이 나올 때마다:
 
 ## 진행 상황
 
-- 다음 시작 지점: Task 13 — CI/CD (GitHub Actions) + PWA (선택)
+- 다음 시작 지점: Task 14 — Presence 개선 (_broadcast_presence 수정, 온라인 유저 필터)
 - Task 12 완료: 프론트엔드 실시간 기능 통합
   - `CreateRoomModal`: 채팅방 만들기 / DM 시작 탭 모달
   - `Sidebar`: + 버튼으로 모달 열기, 방 아이콘 (#/👤), 내 온라인 상태 점 표시
