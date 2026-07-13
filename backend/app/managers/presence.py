@@ -18,10 +18,10 @@ async def is_online(user_id: UUID) -> bool:
     return await redis_client.exists(f"user:{user_id}:online") == 1
 
 
-async def get_online_peer_ids(peer_ids: list[UUID]) -> list[UUID]:
-    if not peer_ids:
-        return []
+async def get_all_online_ids() -> list[UUID]:
+    user_ids = []
 
-    keys = [f"user:{user_id}:online" for user_id in peer_ids]
-    results = await redis_client.mget(keys)
-    return [user_id for user_id, val in zip(peer_ids, results) if val is not None]
+    async for key in redis_client.scan_iter("user:*:online"):
+        user_ids.append(UUID(key.split(":")[1]))
+
+    return user_ids

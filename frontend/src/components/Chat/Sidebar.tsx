@@ -85,17 +85,16 @@ export default function Sidebar({ onSelectRoom, activeRoomId }: Props) {
       </div>
 
       <div style={styles.userList}>
-        {users.map((u) => {
-          const isOnline = online[u.id] === true
-          return (
+        {users
+          .filter(u => online[u.id] === true && u.id !== user?.id)
+          .map((u) => (
             <div key={u.id} style={styles.userItem}>
-              <span style={{ ...styles.statusDot, background: isOnline ? '#22c55e' : '#d1d5db' }} />
+              <span style={{ ...styles.statusDot, background: '#22c55e' }} />
               <span style={styles.userName}>{u.username}</span>
             </div>
-          )
-        })}
-        {users.length === 0 && (
-          <p style={styles.empty}>다른 유저가 없습니다.</p>
+          ))}
+        {users.filter(u => online[u.id] === true && u.id !== user?.id).length === 0 && (
+          <p style={styles.empty}>온라인 유저가 없습니다.</p>
         )}
       </div>
 
