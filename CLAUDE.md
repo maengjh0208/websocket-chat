@@ -21,7 +21,23 @@ WebSocket 관련 코드나 개념이 나올 때마다:
 
 ## 진행 상황
 
-- 다음 시작 지점: Task 14 — Presence 개선 (_broadcast_presence 수정, 온라인 유저 필터)
+- 다음 시작 지점: Task 15 프론트엔드 — 친구 목록 UI (types/index.ts, store/friend.ts, Sidebar.tsx)
+- Task 15 백엔드 완료: 친구 목록 기능
+  - `domain/friend.py`: FriendEntity, FriendRequestEntity
+  - `core/enums.py`: FriendStatus 추가
+  - `core/exceptions.py`: INVALID_REQUEST, FRIEND_REQUEST_EXISTS, FRIEND_REQUEST_NOT_FOUND, FRIEND_NOT_FOUND 추가
+  - `db/models.py`: Friend 모델 추가 + Alembic migration 완료
+  - `crud/friend.py`: get_request, send_request, get_received_requests(JOIN), accept_request, get_friend_ids, delete_friend
+  - `crud/user.py`: get_users_by_ids 추가
+  - `managers/presence.py`: get_online_peer_ids 반환 타입 dict[UUID, bool]로 변경
+  - `services/friend.py`: send_request, get_received_requests, accept_request, get_friends, delete_friend
+  - `schemas/friend.py`: FriendRequest, FriendRequestResponse(from_attributes=True), FriendResponse
+  - `api/routes/friends.py`: 5개 엔드포인트, main.py에 등록 완료
+- Task 14 완료: Presence 개선
+  - `redis.py`: decode_responses=True 추가
+  - `presence.py`: get_all_online_ids() (scan_iter), get_online_peer_ids() (dict[UUID, bool] 반환)
+  - `websocket.py`: _broadcast_presence → 전체 온라인 유저 대상으로 변경, session 의존성 제거
+  - `Sidebar.tsx`: 유저 목록 온라인 유저만 표시
 - Task 12 완료: 프론트엔드 실시간 기능 통합
   - `CreateRoomModal`: 채팅방 만들기 / DM 시작 탭 모달
   - `Sidebar`: + 버튼으로 모달 열기, 방 아이콘 (#/👤), 내 온라인 상태 점 표시
