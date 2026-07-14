@@ -24,7 +24,7 @@ async def send_friend_request(
     current_user: Annotated[UserEntity, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_db)],
 ):
-    await friend_service.send_request(
+    await friend_service.send_friend_request(
         user_id=current_user.id,
         target_id=body.target_id,
         session=session,

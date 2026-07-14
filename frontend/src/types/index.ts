@@ -53,3 +53,15 @@ export interface AuthTokens {
   access_token: string
   token_type: string
 }
+
+export interface Friend {
+  id: string
+  username: string
+  is_online: boolean
+}
+
+export interface FriendRequest {
+  requester_id: string
+  username: string
+  created_at: string
+}
