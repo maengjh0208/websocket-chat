@@ -1,5 +1,5 @@
 import pytest
-from starlette import status
+from fastapi import status
 
 # 테스트 함수는 반드시 test_ 로 시작해야 pytest가 인식함
 # client 파라미터 -> conftest의 client fixture 자동 주입

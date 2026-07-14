@@ -24,3 +24,8 @@ class WSMessageType(StrEnum):
     TYPING_INDICATOR = "typing.indicator"
 
     READ_UPDATE = "read.update"  # 클라이언트가 방을 열었을때 보내는 신호
+
+
+class FriendStatus(StrEnum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"

@@ -1,8 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
-from starlette import status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.room import CreateDMRequest, CreateRoomRequest, InviteMemberRequest, RoomResponse
@@ -14,7 +13,7 @@ from app.services import message as message_service
 from app.schemas.message import MessageResponse
 from app.schemas.user import UserResponse
 
-router = APIRouter(prefix="/rooms")
+router = APIRouter(prefix="/rooms", tags=["rooms"])
 
 
 # GET /rooms - 내가 속한 방 목록 조회

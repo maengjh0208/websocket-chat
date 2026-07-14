@@ -7,7 +7,7 @@ from app.db.models import User
 from app.domain.user import UserEntity, UserWithPassword
 
 
-async def get_user_by_id(session: AsyncSession, user_id: str) -> UserEntity | None:
+async def get_user_by_id(session: AsyncSession, user_id: UUID) -> UserEntity | None:
     query = select(User).where(User.id == user_id)
     result = await session.execute(query)
     user = result.scalar_one_or_none()
@@ -22,6 +22,31 @@ async def get_user_by_id(session: AsyncSession, user_id: str) -> UserEntity | No
         if user
         else None
     )
+
+
+async def get_users_by_ids(session: AsyncSession, user_ids: list[UUID]) -> list[UserEntity]:
+    if not user_ids:
+        return []
+
+    query = select(
+        User.id,
+        User.username,
+        User.email,
+        User.created_at,
+    ).where(User.id.in_(user_ids))
+
+    result = await session.execute(query)
+    rows = result.all()
+
+    return [
+        UserEntity(
+            id=row.id,
+            username=row.username,
+            email=row.email,
+            created_at=row.created_at,
+        )
+        for row in rows
+    ]
 
 
 async def get_user_by_email(session: AsyncSession, email: str) -> UserWithPassword | None:

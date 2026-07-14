@@ -1,7 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
-from starlette import status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services import users as users_service
@@ -10,7 +9,7 @@ from app.db.session import get_db
 from app.domain.user import UserEntity
 from app.api.deps import get_current_user
 
-router = APIRouter(prefix="/users")
+router = APIRouter(prefix="/users", tags=["users"])
 
 
 # GET /users - 회원 목록 조회 (본인 제외)

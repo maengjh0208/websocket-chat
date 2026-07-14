@@ -1,5 +1,5 @@
 import pytest
-from starlette import status
+from fastapi import status
 
 from app.core.security import decode_token
 from tests.integration.helpers import auth_headers, register_and_get_token

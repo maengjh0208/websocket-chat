@@ -25,3 +25,12 @@ async def get_all_online_ids() -> list[UUID]:
         user_ids.append(UUID(key.split(":")[1]))
 
     return user_ids
+
+
+async def get_online_peer_ids(peer_ids: list[UUID]) -> dict[UUID, bool]:
+    if not peer_ids:
+        return dict()
+
+    keys = [f"user:{uid}:online" for uid in peer_ids]
+    results = await redis_client.mget(keys)
+    return {uid: val is not None for uid, val in zip(peer_ids, results)}

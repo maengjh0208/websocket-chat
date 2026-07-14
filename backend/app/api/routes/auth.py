@@ -1,14 +1,13 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
-from starlette import status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services import auth as auth_service
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
 from app.db.session import get_db
 
-router = APIRouter(prefix="/auth")
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 # POST /auth/register - 회원 가입
