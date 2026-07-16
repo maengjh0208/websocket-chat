@@ -1,3 +1,6 @@
+import asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -7,8 +10,19 @@ from app.api.routes.users import router as users_router
 from app.api.routes.rooms import router as rooms_router
 from app.api.routes.friends import router as friends_router
 from app.api.websocket import router as websocket_router
+from app.api.websocket import handle_pubsub_message
+from app.managers import pubsub
 
-app = FastAPI(title="WebSocket Chat")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # subscribe는 async for 로 Redis를 계속 구독하는 무한 루프임. 그냥 await를 하면 서버가 여기서 멈춤. create_task로 백그라운드 태스크로 띄워야함. (서버가 정상 동작하면서 동시에 Redis도 구독할 수 있음)
+    task = asyncio.create_task(pubsub.subscribe(handle_pubsub_message))
+    yield
+    task.cancel()
+
+
+app = FastAPI(title="WebSocket Chat", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

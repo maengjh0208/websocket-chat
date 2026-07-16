@@ -14,22 +14,30 @@ from app.managers.connection import manager
 from app.db.session import get_session
 from app.core.security import decode_token
 from app.core.enums import PresenceStatus, WSCloseCode, WSMessageType
+from app.managers import pubsub
 
 router = APIRouter()
 
 
+async def handle_pubsub_message(data: dict) -> None:
+    # subscribe가 Redis에서 받은 메시지를 처리하는 콜백
+    user_ids = [UUID(uid) for uid in data["user_ids"]]
+    await manager.broadcast_to_users(user_ids=user_ids, payload=data["payload"])
+
+
 async def _broadcast_presence(user_id: UUID, status: PresenceStatus, is_reconnect: bool = False) -> None:
     all_online_ids = await presence.get_all_online_ids()
-    peer_ids = [uid for uid in all_online_ids if uid != user_id]
+    peer_ids = [str(uid) for uid in all_online_ids if uid != user_id]
 
-    # 내가 접속할떄/끊길때 다른 유저들에게 온라인/오프라인 상태를 알려줌
-    await manager.broadcast_to_users(
-        user_ids=peer_ids,
-        payload={
-            "type": WSMessageType.PRESENCE_UPDATE,
-            "user_id": str(user_id),
-            "status": status,
-        },
+    await pubsub.publish(
+        {
+            "user_ids": peer_ids,
+            "payload": {
+                "type": WSMessageType.PRESENCE_UPDATE,
+                "user_id": str(user_id),
+                "status": status,
+            },
+        }
     )
 
     # 재연결 시 현재 온라인인 유저들의 상태를 나에게 전송
@@ -39,7 +47,7 @@ async def _broadcast_presence(user_id: UUID, status: PresenceStatus, is_reconnec
                 user_id=user_id,
                 payload={
                     "type": WSMessageType.PRESENCE_UPDATE,
-                    "user_id": str(peer_id),
+                    "user_id": peer_id,
                     "status": PresenceStatus.ONLINE,
                 },
             )
@@ -104,31 +112,34 @@ async def websocket_endpoint(
 
                     member_ids = await crud_room.get_room_member_ids(session, room_id)
 
-                    await manager.broadcast_to_users(
-                        user_ids=member_ids,
-                        payload={
-                            "type": WSMessageType.MESSAGE_NEW,
-                            "id": str(message_id),
-                            "room_id": str(room_id),
-                            "sender": {"id": str(user.id), "username": user.username},
-                            "content": content,
-                            "created_at": message_created_at.isoformat(),
-                        },
+                    await pubsub.publish(
+                        {
+                            "user_ids": [str(uid) for uid in member_ids],
+                            "payload": {
+                                "type": WSMessageType.MESSAGE_NEW,
+                                "id": str(message_id),
+                                "room_id": str(room_id),
+                                "sender": {"id": str(user.id), "username": user.username},
+                                "content": content,
+                                "created_at": message_created_at.isoformat(),
+                            },
+                        }
                     )
                 elif msg_type in (WSMessageType.TYPING_START, WSMessageType.TYPING_STOP):
                     room_id = UUID(payload["room_id"])
                     is_typing = msg_type == WSMessageType.TYPING_START
                     member_ids = await crud_room.get_room_member_ids(session, room_id)
 
-                    await manager.broadcast_to_users(
-                        user_ids=member_ids,
-                        payload={
-                            "type": WSMessageType.TYPING_INDICATOR,
-                            "room_id": str(room_id),
-                            "username": user.username,
-                            "is_typing": is_typing,
-                        },
-                        exclude_user_id=user.id,
+                    await pubsub.publish(
+                        {
+                            "user_ids": [str(uid) for uid in member_ids if uid != user.id],
+                            "payload": {
+                                "type": WSMessageType.TYPING_INDICATOR,
+                                "room_id": str(room_id),
+                                "username": user.username,
+                                "is_typing": is_typing,
+                            },
+                        }
                     )
                 elif msg_type == WSMessageType.READ_UPDATE:
                     room_id = UUID(payload["room_id"])
