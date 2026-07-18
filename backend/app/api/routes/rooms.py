@@ -130,6 +130,25 @@ async def get_messages(
     ]
 
 
+# GET /rooms/{room_id}/members - 그룹방 유저 목록 조회
+@router.get(
+    "/{room_id}/members",
+    response_model=list[UserResponse],
+    status_code=status.HTTP_200_OK,
+    description="그룹방 유저 목록 조회",
+)
+async def get_room_members(
+    room_id: UUID,
+    current_user: Annotated[UserEntity, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db)],
+):
+    return await room_service.get_room_members(
+        room_id=room_id,
+        user_id=current_user.id,
+        session=session,
+    )
+
+
 # POST /rooms/{room_id}/members - 그룹방에 유저 초대
 @router.post(
     "/{room_id}/members",

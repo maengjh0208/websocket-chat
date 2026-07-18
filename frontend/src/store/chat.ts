@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import apiClient from '@/api/client'
-import type { Room, Message } from '@/types'
+import type { Room, Message, User } from '@/types'
 
 interface TypingState {
   [roomId: string]: string[] // 현재 타이핑 중인 username 목록
@@ -16,10 +16,12 @@ interface ChatState {
   messages: Record<string, Message[]> // roomId → messages
   typing: TypingState
   online: OnlineState
+  roomMembers: Record<string, User[]> // roomId → members
 
   fetchRooms: () => Promise<void>
   setActiveRoom: (roomId: string) => void
   fetchMessages: (roomId: string) => Promise<void>
+  fetchRoomMembers: (roomId: string) => Promise<void>
   leaveRoom: (roomId: string) => Promise<void>
 
   // WebSocket 이벤트 수신 시 호출
@@ -34,6 +36,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messages: {},
   typing: {},
   online: {},
+  roomMembers: {},
 
   fetchRooms: async () => {
     const { data } = await apiClient.get<Room[]>('/rooms')
@@ -48,6 +51,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const { data } = await apiClient.get<Message[]>(`/rooms/${roomId}/messages`)
     set((state) => ({
       messages: { ...state.messages, [roomId]: data },
+    }))
+  },
+
+  fetchRoomMembers: async (roomId) => {
+    const { data } = await apiClient.get<User[]>(`/rooms/${roomId}/members`)
+    set((state) => ({
+      roomMembers: { ...state.roomMembers, [roomId]: data },
     }))
   },
 

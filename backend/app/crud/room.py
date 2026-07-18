@@ -4,8 +4,9 @@ from uuid import UUID
 from sqlalchemy import intersect, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Room, RoomMember
+from app.db.models import Room, RoomMember, User
 from app.domain.room import RoomEntity
+from app.domain.user import UserEntity
 
 
 async def create_room(session: AsyncSession, name: str, created_by: UUID) -> RoomEntity:
@@ -121,6 +122,35 @@ async def get_room_member_ids(session: AsyncSession, room_id: UUID) -> list[UUID
     result = await session.execute(query)
 
     return list(result.scalars().all())
+
+
+async def get_room_members(session: AsyncSession, room_id: UUID) -> list[UserEntity]:
+    query = (
+        select(
+            User.id,
+            User.username,
+            User.email,
+            User.created_at,
+        )
+        .join(RoomMember, RoomMember.user_id == User.id)
+        .where(
+            RoomMember.room_id == room_id,
+            RoomMember.left_at.is_(None),
+        )
+    )
+
+    result = await session.execute(query)
+    users = result.all()
+
+    return [
+        UserEntity(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            created_at=user.created_at,
+        )
+        for user in users
+    ]
 
 
 async def get_peer_user_ids(session: AsyncSession, user_id: UUID) -> list[UUID]:

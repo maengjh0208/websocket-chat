@@ -5,6 +5,7 @@ import MessageBubble from './MessageBubble'
 import TypingIndicator from './TypingIndicator'
 import MessageInput from './MessageInput'
 import InviteMemberModal from './InviteMemberModal'
+import MemberListModal from './MemberListModal'
 
 interface Props {
   roomId: string
@@ -25,6 +26,7 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
   const { user } = useAuthStore()
   const bottomRef = useRef<HTMLDivElement>(null)
   const [showInvite, setShowInvite] = useState(false)
+  const [showMembers, setShowMembers] = useState(false)
 
   useEffect(() => {
     fetchMessages(roomId)
@@ -40,11 +42,16 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
     <div style={styles.container}>
       <div style={styles.header}>
         <span style={styles.roomName}>{room?.is_dm ? '👤' : '#'} {room?.name ?? ''}</span>
-        {!room?.is_dm && (
-          <button style={styles.inviteBtn} onClick={() => setShowInvite(true)}>
-            + 멤버 초대
+        <div style={styles.headerActions}>
+          <button style={styles.membersBtn} onClick={() => setShowMembers(true)}>
+            👥 멤버
           </button>
-        )}
+          {!room?.is_dm && (
+            <button style={styles.inviteBtn} onClick={() => setShowInvite(true)}>
+              + 멤버 초대
+            </button>
+          )}
+        </div>
       </div>
 
       <div style={styles.messageList}>
@@ -66,6 +73,9 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
       {showInvite && (
         <InviteMemberModal roomId={roomId} onClose={() => setShowInvite(false)} />
       )}
+      {showMembers && (
+        <MemberListModal roomId={roomId} onClose={() => setShowMembers(false)} />
+      )}
     </div>
   )
 }
@@ -78,6 +88,11 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
   roomName: { fontSize: '1rem', fontWeight: 600, color: '#111827' },
+  headerActions: { display: 'flex', alignItems: 'center', gap: '0.5rem' },
+  membersBtn: {
+    padding: '0.35rem 0.75rem', background: '#f3f4f6', color: '#374151',
+    border: '1px solid #e5e7eb', borderRadius: 6, fontSize: '0.85rem', cursor: 'pointer',
+  },
   inviteBtn: {
     padding: '0.35rem 0.75rem', background: '#4f46e5', color: '#fff',
     border: 'none', borderRadius: 6, fontSize: '0.85rem', cursor: 'pointer',
