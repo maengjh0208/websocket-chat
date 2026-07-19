@@ -12,6 +12,10 @@ export interface Room {
   created_at: string
 }
 
+export interface DmRoom extends Room {
+  dm_partner: { id: string; username: string }
+}
+
 export interface Message {
   id: string
   room_id: string

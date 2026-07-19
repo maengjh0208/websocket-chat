@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import UUID
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FriendEntity:
     requester_id: UUID
     addressee_id: UUID
@@ -11,7 +11,7 @@ class FriendEntity:
     created_at: datetime
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FriendRequestEntity:
     requester_id: UUID
     username: str

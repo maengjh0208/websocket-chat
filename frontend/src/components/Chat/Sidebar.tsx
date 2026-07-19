@@ -4,7 +4,7 @@ import { useChatStore } from '@/store/chat'
 import { useAuthStore } from '@/store/auth'
 import { useFriendStore } from '@/store/friend'
 import CreateRoomModal from './CreateRoomModal'
-import type { Room, User } from '@/types'
+import type { Room, DmRoom, User } from '@/types'
 
 interface Props {
   onSelectRoom: (roomId: string) => void
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function Sidebar({ onSelectRoom, activeRoomId }: Props) {
-  const { rooms, online, fetchRooms, leaveRoom } = useChatStore()
+  const { rooms, dmRooms, online, fetchRooms, fetchDmRooms, leaveRoom } = useChatStore()
   const { user, logout } = useAuthStore()
   const { friends, pendingRequests, fetchFriends, fetchPendingRequests, sendRequest, acceptRequest, deleteFriend } = useFriendStore()
   const [showModal, setShowModal] = useState(false)
@@ -21,10 +21,11 @@ export default function Sidebar({ onSelectRoom, activeRoomId }: Props) {
 
   useEffect(() => {
     fetchRooms()
+    fetchDmRooms()
     apiClient.get<User[]>('/users').then((res) => setUsers(res.data))
     fetchFriends()
     fetchPendingRequests()
-  }, [fetchRooms, fetchFriends, fetchPendingRequests])
+  }, [fetchRooms, fetchDmRooms, fetchFriends, fetchPendingRequests])
 
   const friendIds = new Set(friends.map((f) => f.id))
 
@@ -46,7 +47,30 @@ export default function Sidebar({ onSelectRoom, activeRoomId }: Props) {
     await deleteFriend(friendId)
   }
 
-  const getRoomLabel = (room: Room) => room.name
+  const renderRoomItem = (room: Room, label: string) => (
+    <div
+      key={room.id}
+      style={styles.roomWrapper}
+      onMouseEnter={() => setHoveredRoomId(room.id)}
+      onMouseLeave={() => setHoveredRoomId(null)}
+    >
+      <button
+        onClick={() => onSelectRoom(room.id)}
+        style={{
+          ...styles.roomItem,
+          background: room.id === activeRoomId ? '#e0e7ff' : 'transparent',
+        }}
+      >
+        <span style={styles.roomIcon}>{room.is_dm ? '👤' : '#'}</span>
+        <span style={styles.roomName}>{label}</span>
+      </button>
+      {hoveredRoomId === room.id && (
+        <button onClick={() => leaveRoom(room.id)} style={styles.leaveBtn} title="방 나가기">
+          ×
+        </button>
+      )}
+    </div>
+  )
 
   return (
     <div style={styles.container}>
@@ -59,45 +83,33 @@ export default function Sidebar({ onSelectRoom, activeRoomId }: Props) {
         <button onClick={logout} style={styles.logoutBtn}>로그아웃</button>
       </div>
 
-      {/* 채팅방 섹션 */}
+      {/* 그룹방 섹션 */}
       <div style={styles.sectionHeader}>
-        <span style={styles.sectionLabel}>채팅방</span>
-        <button onClick={() => setShowModal(true)} style={styles.addBtn} title="새 채팅방 / DM">
+        <span style={styles.sectionLabel}>그룹방</span>
+        <button onClick={() => setShowModal(true)} style={styles.addBtn} title="새 그룹방 만들기">
           +
         </button>
       </div>
 
       <div style={styles.roomList}>
-        {rooms.map((room: Room) => (
-          <div
-            key={room.id}
-            style={styles.roomWrapper}
-            onMouseEnter={() => setHoveredRoomId(room.id)}
-            onMouseLeave={() => setHoveredRoomId(null)}
-          >
-            <button
-              onClick={() => onSelectRoom(room.id)}
-              style={{
-                ...styles.roomItem,
-                background: room.id === activeRoomId ? '#e0e7ff' : 'transparent',
-              }}
-            >
-              <span style={styles.roomIcon}>{room.is_dm ? '👤' : '#'}</span>
-              <span style={styles.roomName}>{getRoomLabel(room)}</span>
-            </button>
-            {hoveredRoomId === room.id && (
-              <button
-                onClick={() => leaveRoom(room.id)}
-                style={styles.leaveBtn}
-                title="방 나가기"
-              >
-                ×
-              </button>
-            )}
-          </div>
-        ))}
+        {rooms.map((room: Room) => renderRoomItem(room, room.name))}
         {rooms.length === 0 && (
           <p style={styles.empty}>+ 버튼으로 방을 만들어보세요.</p>
+        )}
+      </div>
+
+      {/* DM 섹션 */}
+      <div style={styles.sectionHeader}>
+        <span style={styles.sectionLabel}>DM</span>
+        <button onClick={() => setShowModal(true)} style={styles.addBtn} title="DM 시작하기">
+          +
+        </button>
+      </div>
+
+      <div style={styles.roomList}>
+        {dmRooms.map((room: DmRoom) => renderRoomItem(room, room.dm_partner.username))}
+        {dmRooms.length === 0 && (
+          <p style={styles.empty}>DM이 없습니다.</p>
         )}
       </div>
 

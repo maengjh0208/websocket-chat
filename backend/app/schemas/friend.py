@@ -10,13 +10,15 @@ class FriendRequest(BaseModel):
 
 class FriendRequestResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
+
     requester_id: UUID
     username: str
     created_at: datetime
 
 
 class FriendResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     username: str
     is_online: bool

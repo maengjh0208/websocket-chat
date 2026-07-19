@@ -5,7 +5,7 @@ from uuid import UUID
 from app.domain.user import UserEntity
 
 
-@dataclass
+@dataclass(kw_only=True)
 class MessageEntity:
     id: UUID
     room_id: UUID

@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.room import CreateDMRequest, CreateRoomRequest, InviteMemberRequest, RoomResponse
+from app.schemas.room import CreateDMRequest, CreateRoomRequest, DmRoomResponse, InviteMemberRequest, RoomResponse
 from app.domain.user import UserEntity
 from app.api.deps import get_current_user
 from app.db.session import get_db
@@ -14,31 +14,6 @@ from app.schemas.message import MessageResponse
 from app.schemas.user import UserResponse
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
-
-
-# GET /rooms - 내가 속한 방 목록 조회
-@router.get(
-    "",
-    response_model=list[RoomResponse],
-    status_code=status.HTTP_200_OK,
-    description="내가 속한 방 목록 조회",
-)
-async def get_rooms(
-    current_user: Annotated[UserEntity, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_db)],
-):
-    rooms = await room_service.get_rooms(current_user.id, session)
-
-    return [
-        RoomResponse(
-            id=room.id,
-            name=room.name,
-            is_dm=room.is_dm,
-            created_by=room.created_by,
-            created_at=room.created_at,
-        )
-        for room in rooms
-    ]
 
 
 # POST /rooms - 그룹 채팅방 생성
@@ -53,19 +28,25 @@ async def create_room(
     current_user: Annotated[UserEntity, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_db)],
 ):
-    room = await room_service.create_room(
+    return await room_service.create_room(
         name=req.name,
         user_id=current_user.id,
         session=session,
     )
 
-    return RoomResponse(
-        id=room.id,
-        name=room.name,
-        is_dm=room.is_dm,
-        created_by=room.created_by,
-        created_at=room.created_at,
-    )
+
+# GET /rooms - 내가 속한 방 목록 조회
+@router.get(
+    "",
+    response_model=list[RoomResponse],
+    status_code=status.HTTP_200_OK,
+    description="내가 속한 그룹방 목록 조회",
+)
+async def get_rooms(
+    current_user: Annotated[UserEntity, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db)],
+):
+    return await room_service.get_rooms(current_user.id, session)
 
 
 # POST /rooms/dm - DM 방 생성 (또는 기존 DM 방 반환)
@@ -80,19 +61,25 @@ async def create_dm_room(
     current_user: Annotated[UserEntity, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_db)],
 ):
-    dm_room = await room_service.create_dm(
+    return await room_service.create_dm(
         user_id=current_user.id,
         target_id=req.target_user_id,
         session=session,
     )
 
-    return RoomResponse(
-        id=dm_room.id,
-        name=dm_room.name,
-        is_dm=dm_room.is_dm,
-        created_by=dm_room.created_by,
-        created_at=dm_room.created_at,
-    )
+
+# GET /rooms/dm - 내가 속한 DM방 목록 조회
+@router.get(
+    "/dm",
+    response_model=list[DmRoomResponse],
+    status_code=status.HTTP_200_OK,
+    description="내가 속한 DM방 목록 조회",
+)
+async def get_dm_rooms(
+    current_user: Annotated[UserEntity, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_db)],
+):
+    return await room_service.get_dm_rooms(current_user.id, session)
 
 
 # GET /rooms/{room_id}/messages - room_id 방의 메세지 조회
@@ -107,27 +94,11 @@ async def get_messages(
     current_user: Annotated[UserEntity, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_db)],
 ):
-    messages = await message_service.get_messages(
+    return await message_service.get_messages(
         user_id=current_user.id,
         room_id=room_id,
         session=session,
     )
-
-    return [
-        MessageResponse(
-            id=message.id,
-            room_id=message.room_id,
-            sender=UserResponse(
-                id=message.sender.id,
-                username=message.sender.username,
-                email=message.sender.email,
-                created_at=message.sender.created_at,
-            ),
-            content=message.content,
-            created_at=message.created_at,
-        )
-        for message in messages
-    ]
 
 
 # GET /rooms/{room_id}/members - 그룹방 유저 목록 조회

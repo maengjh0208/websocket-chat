@@ -11,6 +11,10 @@ async def get_rooms(user_id: UUID, session: AsyncSession) -> list[RoomEntity]:
     return await crud_room.get_rooms_by_user(session, user_id)
 
 
+async def get_dm_rooms(user_id: UUID, session: AsyncSession) -> list[RoomEntity]:
+    return await crud_room.get_dm_rooms_by_user(session, user_id)
+
+
 async def create_room(name: str, user_id: UUID, session: AsyncSession) -> RoomEntity:
     return await crud_room.create_room(
         session=session,

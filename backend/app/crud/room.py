@@ -34,6 +34,7 @@ async def get_rooms_by_user(session: AsyncSession, user_id: UUID) -> list[RoomEn
         .where(
             RoomMember.user_id == user_id,
             RoomMember.left_at.is_(None),
+            Room.is_dm == False,
         )
     )
 
@@ -49,6 +50,54 @@ async def get_rooms_by_user(session: AsyncSession, user_id: UUID) -> list[RoomEn
             created_at=room.created_at,
         )
         for room in rooms
+    ]
+
+
+async def get_dm_rooms_by_user(session: AsyncSession, user_id: UUID) -> list[RoomEntity]:
+    sub_query = (
+        select(Room.id)
+        .join(RoomMember, RoomMember.room_id == Room.id)
+        .where(
+            RoomMember.user_id == user_id,
+            RoomMember.left_at.is_(None),
+            Room.is_dm == True,
+        )
+    )
+
+    query = (
+        select(
+            Room.id,
+            Room.name,
+            Room.is_dm,
+            Room.created_by,
+            Room.created_at,
+            User.id.label("user_id"),
+            User.username,
+        )
+        .join(RoomMember, RoomMember.room_id == Room.id)
+        .join(User, User.id == RoomMember.user_id)
+        .where(
+            RoomMember.user_id != user_id,
+            Room.id.in_(sub_query),
+        )
+    )
+
+    result = await session.execute(query)
+    rows = result.all()
+
+    return [
+        RoomEntity(
+            id=row.id,
+            name=row.name,
+            is_dm=row.is_dm,
+            created_by=row.created_by,
+            created_at=row.created_at,
+            dm_partner=UserEntity(
+                id=row.user_id,
+                username=row.username,
+            ),
+        )
+        for row in rows
     ]
 
 

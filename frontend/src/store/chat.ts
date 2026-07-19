@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import apiClient from '@/api/client'
-import type { Room, Message, User } from '@/types'
+import type { Room, DmRoom, Message, User } from '@/types'
 
 interface TypingState {
   [roomId: string]: string[] // 현재 타이핑 중인 username 목록
@@ -12,6 +12,7 @@ interface OnlineState {
 
 interface ChatState {
   rooms: Room[]
+  dmRooms: DmRoom[]
   activeRoomId: string | null
   messages: Record<string, Message[]> // roomId → messages
   typing: TypingState
@@ -19,6 +20,7 @@ interface ChatState {
   roomMembers: Record<string, User[]> // roomId → members
 
   fetchRooms: () => Promise<void>
+  fetchDmRooms: () => Promise<void>
   setActiveRoom: (roomId: string) => void
   fetchMessages: (roomId: string) => Promise<void>
   fetchRoomMembers: (roomId: string) => Promise<void>
@@ -32,6 +34,7 @@ interface ChatState {
 
 export const useChatStore = create<ChatState>((set, get) => ({
   rooms: [],
+  dmRooms: [],
   activeRoomId: null,
   messages: {},
   typing: {},
@@ -41,6 +44,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
   fetchRooms: async () => {
     const { data } = await apiClient.get<Room[]>('/rooms')
     set({ rooms: data })
+  },
+
+  fetchDmRooms: async () => {
+    const { data } = await apiClient.get<DmRoom[]>('/rooms/dm')
+    set({ dmRooms: data })
   },
 
   setActiveRoom: (roomId) => {
@@ -93,6 +101,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     await apiClient.delete(`/rooms/${roomId}/members/me`)
     set((state) => ({
       rooms: state.rooms.filter((r) => r.id !== roomId),
+      dmRooms: state.dmRooms.filter((r) => r.id !== roomId),
       activeRoomId: state.activeRoomId === roomId ? null : state.activeRoomId,
       messages: Object.fromEntries(Object.entries(state.messages).filter(([id]) => id !== roomId)),
     }))
