@@ -1,4 +1,4 @@
-# 사이드바 그룹방 / DM방 분리 계획
+# 사이드바 그룹방 / DM방 분리 계획 ✅ 완료
 
 ## 목표
 
@@ -193,4 +193,4 @@ async def get_dm_rooms(...):
 | 3 | 직접 작성 | `crud/room.py` — `get_rooms_by_user` 수정 + `get_dm_rooms_by_user` 추가 |
 | 4 | 직접 작성 | `services/room.py` — `get_dm_rooms` 추가 |
 | 5 | 직접 작성 | `routes/rooms.py` — `GET /rooms/dm` 추가 |
-| 6–7 | Claude | 프론트엔드 타입, 스토어, Sidebar 수정 |
+| 6–7 | Claude | 프론트엔드 타입, 스토어, Sidebar 수정 ✅ |

@@ -55,9 +55,17 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
       </div>
 
       <div style={styles.messageList}>
-        {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} isMe={msg.sender.id === user?.id} />
-        ))}
+        {messages.map((msg, i) => {
+          const dateKey = msg.created_at.slice(0, 10)
+          const prevDateKey = i > 0 ? messages[i - 1].created_at.slice(0, 10) : null
+          const showSeparator = dateKey !== prevDateKey
+          return (
+            <div key={msg.id}>
+              {showSeparator && <DateSeparator dateStr={msg.created_at} />}
+              <MessageBubble message={msg} isMe={msg.sender.id === user?.id} />
+            </div>
+          )
+        })}
         <div ref={bottomRef} />
       </div>
       <div style={styles.bottom}>
@@ -78,6 +86,27 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
       )}
     </div>
   )
+}
+
+function DateSeparator({ dateStr }: { dateStr: string }) {
+  const date = new Date(dateStr)
+  const label = date.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
+  return (
+    <div style={sepStyles.wrapper}>
+      <div style={sepStyles.line} />
+      <span style={sepStyles.label}>{label}</span>
+      <div style={sepStyles.line} />
+    </div>
+  )
+}
+
+const sepStyles: Record<string, React.CSSProperties> = {
+  wrapper: {
+    display: 'flex', alignItems: 'center', gap: '0.75rem',
+    margin: '1rem 0 0.5rem',
+  },
+  line: { flex: 1, height: 1, background: '#e5e7eb' },
+  label: { fontSize: '0.75rem', color: '#9ca3af', whiteSpace: 'nowrap', flexShrink: 0 },
 }
 
 const styles: Record<string, React.CSSProperties> = {
