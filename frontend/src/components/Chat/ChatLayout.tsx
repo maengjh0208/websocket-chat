@@ -19,9 +19,7 @@ export default function ChatLayout() {
   }, [setActiveRoom])
 
   const handleSendMessage = useCallback(
-    (content: string) => {
-      if (activeRoomId) sendMessage(activeRoomId, content)
-    },
+    (content: string) => { if (activeRoomId) sendMessage(activeRoomId, content) },
     [activeRoomId, sendMessage],
   )
 
@@ -51,7 +49,9 @@ export default function ChatLayout() {
           />
         ) : (
           <div style={styles.placeholder}>
-            <p>왼쪽 + 버튼으로 채팅방을 만들거나 선택하세요.</p>
+            <div style={styles.placeholderMark} />
+            <p style={styles.placeholderTitle}>대화를 시작해보세요</p>
+            <p style={styles.placeholderSub}>왼쪽에서 채팅방을 선택하거나 새 방을 만드세요.</p>
           </div>
         )}
       </div>
@@ -63,7 +63,13 @@ const styles: Record<string, React.CSSProperties> = {
   container: { display: 'flex', height: '100vh', overflow: 'hidden' },
   main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
   placeholder: {
-    flex: 1, display: 'flex', alignItems: 'center',
-    justifyContent: 'center', color: '#9ca3af',
+    flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+    justifyContent: 'center', gap: '0.5rem', background: 'var(--bg-message-list)',
   },
+  placeholderMark: {
+    width: 40, height: 40, borderRadius: 12,
+    background: 'linear-gradient(135deg, #6366f1, #4f46e5)', marginBottom: '0.5rem',
+  },
+  placeholderTitle: { fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 },
+  placeholderSub: { fontSize: '0.875rem', color: 'var(--text-muted)', margin: 0 },
 }

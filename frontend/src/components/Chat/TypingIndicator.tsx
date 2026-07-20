@@ -14,5 +14,5 @@ export default function TypingIndicator({ typingUsers }: Props) {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  text: { fontSize: '0.8rem', color: '#6b7280', margin: '0.25rem 0 0', height: '1.2rem' },
+  text: { fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0.25rem 0 0', height: '1.2rem' },
 }

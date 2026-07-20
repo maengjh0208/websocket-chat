@@ -9,7 +9,6 @@ export default function App() {
   const initUser = useAuthStore((s) => s.initUser)
   const [view, setView] = useState<'login' | 'register'>('login')
 
-  // 새로고침 시 localStorage 토큰으로 유저 정보 복원
   useEffect(() => {
     initUser()
   }, [])
@@ -19,22 +18,29 @@ export default function App() {
   }
 
   return (
-    <div style={styles.center}>
-      {view === 'login' ? (
-        <LoginForm onSwitchToRegister={() => setView('register')} />
-      ) : (
-        <RegisterForm onSwitchToLogin={() => setView('login')} />
-      )}
+    <div style={styles.bg}>
+      <div style={styles.center}>
+        {view === 'login' ? (
+          <LoginForm onSwitchToRegister={() => setView('register')} />
+        ) : (
+          <RegisterForm onSwitchToLogin={() => setView('login')} />
+        )}
+      </div>
     </div>
   )
 }
 
 const styles: Record<string, React.CSSProperties> = {
+  bg: {
+    minHeight: '100vh',
+    background: 'var(--bg-auth)',
+  },
   center: {
     minHeight: '100vh',
     display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#f3f4f6',
+    padding: '1rem',
   },
 }
