@@ -42,7 +42,7 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
   useEffect(() => {
     if (skipScrollRef.current) return
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, typing])
 
   const handleScroll = async () => {
     const el = listRef.current
@@ -93,11 +93,11 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
             </div>
           )
         })}
+        <TypingIndicator typingUsers={typing} />
         <div ref={bottomRef} />
       </div>
 
       <div style={styles.bottom}>
-        <TypingIndicator typingUsers={typing} />
         <MessageInput
           roomId={roomId}
           onSendMessage={onSendMessage}
