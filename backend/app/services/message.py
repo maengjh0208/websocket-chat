@@ -7,7 +7,12 @@ from app.domain.message import MessageEntity
 from app.core.exceptions import ErrorCode, ForbiddenError
 
 
-async def get_messages(user_id: UUID, room_id: UUID, session: AsyncSession) -> list[MessageEntity]:
+async def get_messages(
+    user_id: UUID,
+    room_id: UUID,
+    session: AsyncSession,
+    before_message_id: UUID | None = None,
+) -> list[MessageEntity]:
     if not await crud_room.is_room_member(
         session=session,
         user_id=user_id,
@@ -18,4 +23,5 @@ async def get_messages(user_id: UUID, room_id: UUID, session: AsyncSession) -> l
     return await crud_message.get_messages_by_room(
         session=session,
         room_id=room_id,
+        before_message_id=before_message_id,
     )

@@ -8,7 +8,9 @@ from app.db.models import Message, User
 from app.domain.user import UserEntity
 
 
-async def get_messages_by_room(session: AsyncSession, room_id: UUID, limit: int = 50) -> list[MessageEntity]:
+async def get_messages_by_room(
+    session: AsyncSession, room_id: UUID, limit: int = 50, before_message_id: UUID | None = None
+) -> list[MessageEntity]:
     query = (
         select(
             Message.id.label("message_id"),
@@ -25,6 +27,10 @@ async def get_messages_by_room(session: AsyncSession, room_id: UUID, limit: int 
         .order_by(Message.created_at.desc())
         .limit(limit)
     )
+
+    if before_message_id:
+        sub = select(Message.created_at).where(Message.id == before_message_id).scalar_subquery()
+        query = query.where(Message.created_at < sub)
 
     result = await session.execute(query)
     rows = result.all()

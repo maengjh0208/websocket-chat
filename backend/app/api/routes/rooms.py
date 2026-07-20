@@ -93,11 +93,13 @@ async def get_messages(
     room_id: UUID,
     current_user: Annotated[UserEntity, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_db)],
+    before_message_id: UUID | None = None,
 ):
     return await message_service.get_messages(
         user_id=current_user.id,
         room_id=room_id,
         session=session,
+        before_message_id=before_message_id,
     )
 
 

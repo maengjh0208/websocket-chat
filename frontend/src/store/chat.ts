@@ -15,6 +15,7 @@ interface ChatState {
   dmRooms: DmRoom[]
   activeRoomId: string | null
   messages: Record<string, Message[]> // roomId → messages
+  hasMoreMessages: Record<string, boolean> // roomId → 더 불러올 메시지 있는지
   typing: TypingState
   online: OnlineState
   roomMembers: Record<string, User[]> // roomId → members
@@ -23,6 +24,7 @@ interface ChatState {
   fetchDmRooms: () => Promise<void>
   setActiveRoom: (roomId: string) => void
   fetchMessages: (roomId: string) => Promise<void>
+  fetchOlderMessages: (roomId: string) => Promise<void>
   fetchRoomMembers: (roomId: string) => Promise<void>
   leaveRoom: (roomId: string) => Promise<void>
 
@@ -37,6 +39,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   dmRooms: [],
   activeRoomId: null,
   messages: {},
+  hasMoreMessages: {},
   typing: {},
   online: {},
   roomMembers: {},
@@ -59,6 +62,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const { data } = await apiClient.get<Message[]>(`/rooms/${roomId}/messages`)
     set((state) => ({
       messages: { ...state.messages, [roomId]: data },
+      hasMoreMessages: { ...state.hasMoreMessages, [roomId]: data.length === 50 },
+    }))
+  },
+
+  fetchOlderMessages: async (roomId) => {
+    const existing = get().messages[roomId] ?? []
+    if (existing.length === 0) return
+    const oldestId = existing[0].id
+    const { data } = await apiClient.get<Message[]>(`/rooms/${roomId}/messages`, {
+      params: { before_message_id: oldestId },
+    })
+    set((state) => ({
+      messages: { ...state.messages, [roomId]: [...data, ...existing] },
+      hasMoreMessages: { ...state.hasMoreMessages, [roomId]: data.length === 50 },
     }))
   },
 
