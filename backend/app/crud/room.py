@@ -27,6 +27,31 @@ async def create_room(session: AsyncSession, name: str, created_by: UUID) -> Roo
     )
 
 
+async def get_room_by_id(session: AsyncSession, room_id: UUID) -> RoomEntity | None:
+    query = select(
+        Room.id,
+        Room.name,
+        Room.is_dm,
+        Room.created_by,
+        Room.created_at,
+    ).where(Room.id == room_id)
+
+    result = await session.execute(query)
+    room = result.one_or_none()
+
+    return (
+        RoomEntity(
+            id=room.id,
+            name=room.name,
+            is_dm=room.is_dm,
+            created_by=room.created_by,
+            created_at=room.created_at,
+        )
+        if room
+        else None
+    )
+
+
 async def get_rooms_by_user(session: AsyncSession, user_id: UUID) -> list[RoomEntity]:
     query = (
         select(Room)
@@ -121,6 +146,17 @@ async def create_dm(session: AsyncSession, user_id: UUID, target_id: UUID) -> Ro
     existing = result.scalar_one_or_none()
 
     if existing:
+        await session.execute(
+            update(RoomMember)
+            .where(
+                RoomMember.room_id == existing.id,
+                RoomMember.left_at.is_not(None),
+            )
+            .values(left_at=None)
+        )
+
+        await session.flush()
+
         return RoomEntity(
             id=existing.id,
             name=existing.name,
@@ -200,25 +236,6 @@ async def get_room_members(session: AsyncSession, room_id: UUID) -> list[UserEnt
         )
         for user in users
     ]
-
-
-async def get_peer_user_ids(session: AsyncSession, user_id: UUID) -> list[UUID]:
-    my_rooms = select(RoomMember.room_id).where(
-        RoomMember.user_id == user_id,
-        RoomMember.left_at.is_(None),
-    )
-
-    result = await session.execute(
-        select(RoomMember.user_id)
-        .where(RoomMember.room_id.in_(my_rooms))
-        .where(
-            RoomMember.user_id != user_id,
-            RoomMember.left_at.is_(None),
-        )
-        .distinct()
-    )
-
-    return list(result.scalars().all())
 
 
 async def update_last_read_at(session: AsyncSession, room_id: UUID, user_id: UUID) -> bool:

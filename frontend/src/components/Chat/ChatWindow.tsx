@@ -22,7 +22,7 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
   const messages = useChatStore((s) => s.messages[roomId] ?? [])
   const typing = useChatStore((s) => s.typing[roomId] ?? [])
   const hasMore = useChatStore((s) => s.hasMoreMessages[roomId] ?? true)
-  const room = useChatStore((s) => s.rooms.find((r) => r.id === roomId))
+  const room = useChatStore((s) => [...s.rooms, ...s.dmRooms].find((r) => r.id === roomId))
   const { fetchMessages, fetchOlderMessages } = useChatStore()
   const { user } = useAuthStore()
   const bottomRef = useRef<HTMLDivElement>(null)

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud import room as crud_room
 from app.domain.room import RoomEntity
-from app.core.exceptions import ErrorCode, ForbiddenError
+from app.core.exceptions import BadRequestError, ErrorCode, ForbiddenError, NotFoundError
 from app.domain.user import UserEntity
 
 
@@ -32,6 +32,13 @@ async def create_dm(user_id: UUID, target_id: UUID, session: AsyncSession) -> Ro
 
 
 async def invite_members(user_id: UUID, target_id: UUID, room_id: UUID, session: AsyncSession) -> None:
+    room = await crud_room.get_room_by_id(session, room_id)
+    if not room:
+        raise NotFoundError(error_code=ErrorCode.ROOM_NOT_FOUND)
+
+    if room.is_dm:
+        raise BadRequestError(error_code=ErrorCode.DM_INVITE_NOT_ALLOWED)
+
     if not await crud_room.is_room_member(session=session, user_id=user_id, room_id=room_id):
         raise ForbiddenError(error_code=ErrorCode.NO_INVITATION_PERMISSION)
 
