@@ -11,7 +11,7 @@ interface Props {
 // - 사용자가 입력할 때마다 typing.start를 서버에 push
 // - 500ms 동안 입력이 없으면 typing.stop push
 // - 전송 시 message.send push
-export default function MessageInput({ roomId, onSendMessage, onTypingStart, onTypingStop }: Props) {
+export default function MessageInput({ roomId: _roomId, onSendMessage, onTypingStart, onTypingStop }: Props) {
   const [content, setContent] = useState('')
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isTypingRef = useRef(false)

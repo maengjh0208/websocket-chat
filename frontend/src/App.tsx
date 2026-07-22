@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/auth'
-import LoginForm from '@/components/auth/LoginForm'
-import RegisterForm from '@/components/auth/RegisterForm'
-import ChatLayout from '@/components/chat/ChatLayout'
+import LoginForm from '@/components/Auth/LoginForm'
+import RegisterForm from '@/components/Auth/RegisterForm'
+import ChatLayout from '@/components/Chat/ChatLayout'
 
 export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
