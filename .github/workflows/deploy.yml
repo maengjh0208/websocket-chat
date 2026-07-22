@@ -48,6 +48,16 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          # 정확한 키가 없을떄 ${{ runner.os }}-pip- 로 시작하는 가장 최근 캐시를 부분 복원. 완전히 처음부터 install 하는것보단 빠름.
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # pip cache가 있으면 건너뜀
       - name: Install dependencies
         run: pip install -r backend/requirements.txt
 
@@ -76,3 +86,10 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}/backend:latest
             ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy backend to Render
+        run: curl -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}"
