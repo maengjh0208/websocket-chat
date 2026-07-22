@@ -52,6 +52,6 @@ app.include_router(friends_router)
 app.include_router(websocket_router)
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     return {"status": "ok"}
