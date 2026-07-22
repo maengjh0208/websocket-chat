@@ -2,15 +2,23 @@
 
 WebSocket 기반 실시간 채팅 애플리케이션 실습 프로젝트.
 
-그룹 채팅방, DM, 타이핑 인디케이터, 온라인 상태 표시, 멤버 초대/나가기 기능을 구현했습니다.
+그룹 채팅방, DM, 타이핑 인디케이터, 온라인 상태 표시, 멤버 초대/나가기 기능을 구현.
+
+## 라이브 데모
+
+**https://websocket-chat-gb8w.onrender.com**
+
+> Render 무료 플랜을 사용하므로 첫 접속 시 백엔드가 깨어나는 데 수십 초가 걸릴 수 있음.
 
 ## 기술 스택
 
-| 영역 | 기술 |
-|------|------|
-| 백엔드 | FastAPI, SQLAlchemy (async), PostgreSQL, Redis, WebSocket |
-| 프론트엔드 | React 18, TypeScript, Vite, Zustand, Axios |
-| 인프라 | Docker Compose, Alembic |
+| 영역              | 기술                                                         |
+| ----------------- | ------------------------------------------------------------ |
+| 백엔드            | FastAPI, SQLAlchemy (async), PostgreSQL, Redis, WebSocket    |
+| 프론트엔드        | React 18, TypeScript, Vite, Zustand, Axios                   |
+| 인프라 (로컬)     | Docker Compose, Nginx (로드 밸런서), Alembic                 |
+| 인프라 (프로덕션) | Render (백엔드 · 프론트), Neon (PostgreSQL), Upstash (Redis) |
+| CI/CD             | GitHub Actions (pytest → GHCR 이미지 빌드 → Render 배포)     |
 
 ## 주요 기능
 
@@ -21,7 +29,7 @@ WebSocket 기반 실시간 채팅 애플리케이션 실습 프로젝트.
 - 타이핑 인디케이터
 - 온라인 상태 표시 (Redis presence + heartbeat)
 
-## 실행 방법
+## 로컬 실행 방법
 
 ### 사전 준비
 
@@ -29,16 +37,23 @@ WebSocket 기반 실시간 채팅 애플리케이션 실습 프로젝트.
 
 ### 환경 변수 설정
 
-**`backend/.env`**
+환경별로 파일을 분리함.
+
+- `.env.local` — 로컬 개발용 → gitignore (절대 커밋 금지)
+- `.env.prod` — 프로덕션 참고용 → gitignore (실제 배포값은 Render 대시보드에서 직접 입력)
+
+**`backend/.env.local`** 파일을 생성하고 아래 값을 채움.
+
 ```env
-DATABASE_URL=postgresql+asyncpg://maengjh:Aa123456!@db:5432/chat
-TEST_DATABASE_URL=postgresql+asyncpg://maengjh:Aa123456!@localhost:5432/test_chat
-SECRET_KEY=hello-friend
+DATABASE_URL=postgresql+asyncpg://maengjh:비밀번호@db:5432/chat
+TEST_DATABASE_URL=postgresql+asyncpg://maengjh:비밀번호@localhost:5432/test_chat
+SECRET_KEY=임의의-긴-문자열
 ACCESS_TOKEN_EXPIRE_DAYS=7
 REDIS_URL=redis://redis:6379
 ```
 
-**`frontend/.env`**
+**`frontend/.env.local`** 파일을 생성함.
+
 ```env
 VITE_API_URL=http://localhost:8000
 VITE_WS_URL=ws://localhost:8000
@@ -47,18 +62,26 @@ VITE_WS_URL=ws://localhost:8000
 ### 실행
 
 ```bash
+# 단일 백엔드
 docker compose up --build
+
+# 백엔드 2대 (Nginx 로드 밸런싱 확인용. 분산 서버 테스트용)
+docker compose up --build --scale backend=2
 ```
 
-| 서비스 | 주소 |
-|--------|------|
-| 프론트엔드 | http://localhost:5173 |
-| 백엔드 API | http://localhost:8000 |
-| API 문서 | http://localhost:8000/docs |
+| 서비스                  | 주소                       |
+| ----------------------- | -------------------------- |
+| 프론트엔드              | http://localhost:5173      |
+| 백엔드 API (Nginx 경유) | http://localhost:8000      |
+| API 문서                | http://localhost:8000/docs |
 
 ### 테스트
 
 ```bash
+# 최초 1회: 테스트용 DB 생성
+make backend-test-init-db
+
+# 통합 테스트 실행
 make backend-test
 ```
 
@@ -148,6 +171,8 @@ sequenceDiagram
 
 ```
 websocket-chat/
+├── .github/workflows/
+│   └── deploy.yml        # CI(pytest) → CD(GHCR 빌드 → Render 배포)
 ├── backend/
 │   └── app/
 │       ├── api/

@@ -33,20 +33,17 @@ WebSocket 관련 코드나 개념이 나올 때마다:
 
 ## 환경변수 관리 규칙
 
-팀 규모를 가정한 환경변수 파일 분리 패턴을 사용한다.
+환경별로 파일을 분리한다.
 
 ```
 backend(또는 frontend)/
-  .env.common    # 환경 무관 공통값, 비밀 없음 → 커밋
-  .env.local     # 로컬 전용 비밀값 → gitignore (절대 커밋 금지)
-  .env.example   # 전체 키 목록 + 설명 → 커밋 (신규 팀원 온보딩용)
+  .env.local     # 로컬 개발용 비밀값 → gitignore (절대 커밋 금지)
+  .env.prod      # 프로덕션 참고용 → gitignore (실제 배포값은 Render 대시보드에서 직접 입력)
 ```
 
 - 프로덕션 값은 파일로 관리하지 않고 Render 대시보드에서 직접 입력
-- `.env.local`이 `.env.common`의 같은 키를 덮어쓰는 방식 (나중 파일 우선)
-- `pydantic-settings`: `env_file = ('.env.common', '.env.local')`
-- `docker-compose`: `env_file: [.env.common, .env.local]`
-- 신규 팀원 온보딩: `.env.example` 보고 `.env.local` 채우기
+- `pydantic-settings`: `env_file = '.env.local'`
+- `docker-compose`: `env_file: [./backend/.env.local]`
 
 ## 진행 상황
 
