@@ -95,4 +95,4 @@ jobs:
         run: curl -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}"
 
       - name: Deploy frontend to Render
-        run: curl -X POST "%{{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}"
+        run: curl -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}"
