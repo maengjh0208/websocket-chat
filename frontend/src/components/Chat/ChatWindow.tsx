@@ -153,5 +153,5 @@ const styles: Record<string, React.CSSProperties> = {
   messageList: { flex: 1, overflowY: 'auto', padding: '1rem', background: 'var(--bg-message-list)' },
   noMore: { textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 0.5rem' },
   loadingMore: { textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 0.5rem' },
-  bottom: { flexShrink: 0, padding: '0 1rem', background: 'var(--bg-surface)', borderTop: '1px solid var(--border)' },
+  bottom: { flexShrink: 0, background: 'var(--bg-surface)', borderTop: '1px solid var(--border)', padding: '0 1rem' },
 }

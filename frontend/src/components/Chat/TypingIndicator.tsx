@@ -2,39 +2,67 @@ interface Props {
   typingUsers: string[]
 }
 
+const AVATAR_COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#14b8a6']
+
+function avatarColor(username: string): string {
+  let hash = 0
+  for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash)
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+}
+
 export default function TypingIndicator({ typingUsers }: Props) {
-  const visible = typingUsers.length > 0
+  if (typingUsers.length === 0) return null
 
   return (
-    <div style={{ ...styles.wrapper, visibility: visible ? 'visible' : 'hidden' }}>
-      <div style={styles.bubble}>
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            style={{
-              ...styles.dot,
-              animation: visible
-                ? `typing-bounce 1.2s ease-in-out ${i * 0.2}s infinite`
-                : 'none',
-            }}
-          />
-        ))}
-      </div>
-      <span style={styles.label}>
-        {typingUsers.length === 1
-          ? `${typingUsers[0]}님이 입력 중`
-          : `${typingUsers.join(', ')}님이 입력 중`}
-      </span>
-    </div>
+    <>
+      {typingUsers.map((username) => (
+        <div key={username} style={styles.row}>
+          <div style={{ ...styles.avatar, background: avatarColor(username) }}>
+            {username[0].toUpperCase()}
+          </div>
+          <div style={styles.group}>
+            <span style={styles.name}>{username}</span>
+            <div style={styles.bubble}>
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  style={{
+                    ...styles.dot,
+                    animation: `typing-bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </>
   )
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  wrapper: {
+  row: {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: '0.5rem',
-    padding: '0.75rem 0 0.5rem',
+    marginTop: '0.75rem',
+  },
+  avatar: {
+    width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: '#fff', fontSize: '0.8rem', fontWeight: 700,
+  },
+  group: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  name: {
+    fontSize: '0.72rem',
+    color: 'var(--text-muted)',
+    fontWeight: 600,
+    marginBottom: '0.25rem',
+    paddingLeft: '0.25rem',
   },
   bubble: {
     display: 'flex',
@@ -42,8 +70,8 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '4px',
     background: 'var(--bubble-other-bg)',
     border: '1px solid var(--bubble-other-border)',
-    borderRadius: '12px 12px 12px 4px',
-    padding: '8px 12px',
+    borderRadius: '4px 16px 16px 16px',
+    padding: '0.55rem 0.9rem',
     boxShadow: 'var(--shadow-bubble)',
   },
   dot: {
@@ -52,9 +80,5 @@ const styles: Record<string, React.CSSProperties> = {
     height: 7,
     borderRadius: '50%',
     background: 'var(--text-muted)',
-  },
-  label: {
-    fontSize: '0.75rem',
-    color: 'var(--text-muted)',
   },
 }

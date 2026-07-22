@@ -15,7 +15,6 @@ services:
       - ./backend:/app
     # ports 제거 - nginx가 대신 받음 (backend는 외부에 직접 노출시키지 않고, docker 내부 네트워크에서 8000포트로 실행)
     env_file:
-      - ./backend/.env.common
       - ./backend/.env.local
     depends_on:
       db:
@@ -58,7 +57,6 @@ services:
     ports:
       - "5173:5173"
     env_file:
-      - ./frontend/.env.common
       - ./frontend/.env.local
 
 volumes:

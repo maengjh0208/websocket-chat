@@ -9,9 +9,8 @@ class Settings(BaseSettings):
     REDIS_URL: str
 
     class Config:
-        # .env.common 먼저 읽고, .env.local 나중에 읽히면서 같은 키가 있으면 덮어씀.
         # 파일이 없으면 무시하고 환경변수에서 읽음. 따라서 상용 환경에서도 코드 변경 없이 그대로 동작 가능.
-        env_file = (".env.common", ".env.local")
+        env_file = ".env.local"
 
 
 settings = Settings()
