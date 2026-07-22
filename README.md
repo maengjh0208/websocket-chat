@@ -19,6 +19,7 @@ WebSocket 기반 실시간 채팅 애플리케이션 실습 프로젝트.
 | 인프라 (로컬)     | Docker Compose, Nginx (로드 밸런서), Alembic                 |
 | 인프라 (프로덕션) | Render (백엔드 · 프론트), Neon (PostgreSQL), Upstash (Redis) |
 | CI/CD             | GitHub Actions (pytest → GHCR 이미지 빌드 → Render 배포)     |
+| 모니터링          | Sentry (에러 트래킹, 성능 추적)                               |
 
 ## 주요 기능
 
@@ -50,6 +51,7 @@ TEST_DATABASE_URL=postgresql+asyncpg://maengjh:비밀번호@localhost:5432/test_
 SECRET_KEY=임의의-긴-문자열
 ACCESS_TOKEN_EXPIRE_DAYS=7
 REDIS_URL=redis://redis:6379
+SENTRY_DSN=https://...@sentry.io/...  # 없으면 Sentry 비활성화됨 (선택)
 ```
 
 **`frontend/.env.local`** 파일을 생성함.
