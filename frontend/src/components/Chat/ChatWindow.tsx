@@ -14,12 +14,13 @@ interface Props {
   onTypingStart: () => void
   onTypingStop: () => void
   onReadUpdate: () => void
+  onBack?: () => void // 모바일에서만 전달됨 — 목록 화면으로 돌아가는 뒤로가기 버튼용
 }
 
 // WebSocket 연결 포인트:
 // - 방에 입장할 때 read.update push → 서버가 last_read_at 업데이트
 // - 새 message.new가 수신되면 addMessage(store)를 통해 자동으로 목록에 추가됨
-export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTypingStop, onReadUpdate }: Props) {
+export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTypingStop, onReadUpdate, onBack }: Props) {
   const messages = useChatStore((s) => s.messages[roomId] ?? [])
   const typing = useChatStore((s) => s.typing[roomId] ?? [])
   const hasMore = useChatStore((s) => s.hasMoreMessages[roomId] ?? true)
@@ -72,6 +73,13 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
     <div style={styles.container}>
       <div style={styles.header}>
         <div style={styles.headerLeft}>
+          {onBack && (
+            <button onClick={onBack} style={styles.backBtn} title="목록으로">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M11 3L5 9l6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          )}
           <span style={styles.roomPrefix}>{room?.is_dm ? '' : '#'}</span>
           <span style={styles.roomName}>{roomTitle}</span>
         </div>
@@ -143,10 +151,18 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)',
     flexShrink: 0, background: 'var(--bg-surface)',
   },
-  headerLeft: { display: 'flex', alignItems: 'center', gap: '0.25rem' },
-  roomPrefix: { fontSize: '1rem', fontWeight: 700, color: 'var(--text-muted)' },
-  roomName: { fontSize: '0.975rem', fontWeight: 600, color: 'var(--text-primary)' },
-  headerActions: { display: 'flex', alignItems: 'center', gap: '0.5rem' },
+  headerLeft: { display: 'flex', alignItems: 'center', gap: '0.25rem', minWidth: 0, overflow: 'hidden' },
+  backBtn: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)',
+    padding: '0.25rem', marginRight: '0.25rem', flexShrink: 0,
+  },
+  roomPrefix: { fontSize: '1rem', fontWeight: 700, color: 'var(--text-muted)', flexShrink: 0 },
+  roomName: {
+    fontSize: '0.975rem', fontWeight: 600, color: 'var(--text-primary)',
+    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+  },
+  headerActions: { display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 },
   membersBtn: {
     padding: '0.35rem 0.75rem', background: 'var(--bg-elevated)', color: 'var(--text-secondary)',
     border: '1px solid var(--border)', borderRadius: 6, fontSize: '0.8rem',

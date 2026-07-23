@@ -22,7 +22,7 @@ interface ChatState {
 
   fetchRooms: () => Promise<void>
   fetchDmRooms: () => Promise<void>
-  setActiveRoom: (roomId: string) => void
+  setActiveRoom: (roomId: string | null) => void
   incrementUnread: (roomId: string) => void
   fetchMessages: (roomId: string) => Promise<void>
   fetchOlderMessages: (roomId: string) => Promise<void>
@@ -58,10 +58,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setActiveRoom: (roomId) => {
     // 방을 열면 서버에 read.update를 보내는 것과 별개로, 뱃지는 서버 응답을 기다리지 않고 바로 0으로 리셋
     // (열람 자체는 실패할 일이 없는 순수 로컬 상태 전환이라 낙관적으로 처리해도 안전함)
+    // roomId가 null이면 "방 닫기" (모바일에서 뒤로가기로 목록 화면으로 돌아갈 때 씀)
     set((state) => ({
       activeRoomId: roomId,
-      rooms: state.rooms.map((r) => (r.id === roomId ? { ...r, unread_count: 0 } : r)),
-      dmRooms: state.dmRooms.map((r) => (r.id === roomId ? { ...r, unread_count: 0 } : r)),
+      rooms: roomId ? state.rooms.map((r) => (r.id === roomId ? { ...r, unread_count: 0 } : r)) : state.rooms,
+      dmRooms: roomId ? state.dmRooms.map((r) => (r.id === roomId ? { ...r, unread_count: 0 } : r)) : state.dmRooms,
     }))
   },
 

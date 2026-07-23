@@ -79,7 +79,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   modal: {
     background: 'var(--bg-surface)', borderRadius: 12, padding: '1.5rem',
-    width: 340, boxShadow: 'var(--shadow-modal)',
+    width: '90vw', maxWidth: 340, boxShadow: 'var(--shadow-modal)',
   },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' },
   title: { fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' },

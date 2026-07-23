@@ -51,7 +51,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
   },
   modal: {
-    background: 'var(--bg-surface)', borderRadius: 12, width: 320,
+    background: 'var(--bg-surface)', borderRadius: 12, width: '90vw', maxWidth: 320,
     boxShadow: 'var(--shadow-modal)', overflow: 'hidden',
   },
   header: {

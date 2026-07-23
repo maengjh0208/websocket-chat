@@ -106,7 +106,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   modal: {
     background: 'var(--bg-surface)', borderRadius: 12, padding: '1.5rem',
-    width: 340, boxShadow: 'var(--shadow-modal)',
+    width: '90vw', maxWidth: 340, boxShadow: 'var(--shadow-modal)',
   },
   tabs: { display: 'flex', gap: '1rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border)', paddingBottom: 0 },
   tab: {

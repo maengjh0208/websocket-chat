@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useAuthStore } from '@/store/auth'
 import { useChatStore } from '@/store/chat'
 import { useWebSocket } from '@/hooks/useWebSocket'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import Sidebar from './Sidebar'
 import ChatWindow from './ChatWindow'
 
@@ -11,11 +12,17 @@ export default function ChatLayout() {
   const token = useAuthStore((s) => s.token)
   const activeRoomId = useChatStore((s) => s.activeRoomId)
   const setActiveRoom = useChatStore((s) => s.setActiveRoom)
+  const isMobile = useIsMobile()
 
   const { sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate } = useWebSocket(token)
 
   const handleSelectRoom = useCallback((roomId: string) => {
     setActiveRoom(roomId)
+  }, [setActiveRoom])
+
+  // 모바일에서 채팅방 화면 좌상단 뒤로가기 버튼 → 목록 화면으로 복귀
+  const handleBack = useCallback(() => {
+    setActiveRoom(null)
   }, [setActiveRoom])
 
   const handleSendMessage = useCallback(
@@ -35,26 +42,35 @@ export default function ChatLayout() {
     if (activeRoomId) sendReadUpdate(activeRoomId)
   }, [activeRoomId, sendReadUpdate])
 
+  // 모바일에선 목록/채팅 화면을 동시에 두 개 다 보여줄 화면 폭이 없어서,
+  // 항상 하나만 렌더링하고 activeRoomId 유무로 어느 쪽을 보여줄지 전환함
+  // (PC는 기존처럼 사이드바+채팅창을 나란히 항상 같이 보여줌)
+  const showSidebar = !isMobile || !activeRoomId
+  const showMain = !isMobile || !!activeRoomId
+
   return (
     <div style={styles.container}>
-      <Sidebar onSelectRoom={handleSelectRoom} activeRoomId={activeRoomId} />
-      <div style={styles.main}>
-        {activeRoomId ? (
-          <ChatWindow
-            roomId={activeRoomId}
-            onSendMessage={handleSendMessage}
-            onTypingStart={handleTypingStart}
-            onTypingStop={handleTypingStop}
-            onReadUpdate={handleReadUpdate}
-          />
-        ) : (
-          <div style={styles.placeholder}>
-            <div style={styles.placeholderMark} />
-            <p style={styles.placeholderTitle}>대화를 시작해보세요</p>
-            <p style={styles.placeholderSub}>왼쪽에서 채팅방을 선택하거나 새 방을 만드세요.</p>
-          </div>
-        )}
-      </div>
+      {showSidebar && <Sidebar onSelectRoom={handleSelectRoom} activeRoomId={activeRoomId} isMobile={isMobile} />}
+      {showMain && (
+        <div style={styles.main}>
+          {activeRoomId ? (
+            <ChatWindow
+              roomId={activeRoomId}
+              onSendMessage={handleSendMessage}
+              onTypingStart={handleTypingStart}
+              onTypingStop={handleTypingStop}
+              onReadUpdate={handleReadUpdate}
+              onBack={isMobile ? handleBack : undefined}
+            />
+          ) : (
+            <div style={styles.placeholder}>
+              <div style={styles.placeholderMark} />
+              <p style={styles.placeholderTitle}>대화를 시작해보세요</p>
+              <p style={styles.placeholderSub}>왼쪽에서 채팅방을 선택하거나 새 방을 만드세요.</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

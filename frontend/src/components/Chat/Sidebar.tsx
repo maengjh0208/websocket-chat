@@ -10,6 +10,7 @@ import type { Room, DmRoom, User } from '@/types'
 interface Props {
   onSelectRoom: (roomId: string) => void
   activeRoomId: string | null
+  isMobile?: boolean
 }
 
 const AVATAR_COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#14b8a6']
@@ -20,7 +21,7 @@ function avatarColor(name: string): string {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
 
-export default function Sidebar({ onSelectRoom, activeRoomId }: Props) {
+export default function Sidebar({ onSelectRoom, activeRoomId, isMobile }: Props) {
   const { rooms, dmRooms, online, fetchRooms, fetchDmRooms, leaveRoom } = useChatStore()
   const { user, logout } = useAuthStore()
   const { friends, pendingRequests, fetchFriends, fetchPendingRequests, sendRequest, acceptRequest, deleteFriend } = useFriendStore()
@@ -78,7 +79,7 @@ export default function Sidebar({ onSelectRoom, activeRoomId }: Props) {
   )
 
   return (
-    <div style={styles.container}>
+    <div style={isMobile ? { ...styles.container, width: '100%', borderRight: 'none' } : styles.container}>
       <div style={styles.header}>
         <div style={styles.me}>
           <div style={{ ...styles.myAvatar, background: avatarColor(user?.username ?? 'u') }}>
