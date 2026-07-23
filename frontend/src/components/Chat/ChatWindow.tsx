@@ -6,6 +6,7 @@ import TypingIndicator from './TypingIndicator'
 import MessageInput from './MessageInput'
 import InviteMemberModal from './InviteMemberModal'
 import MemberListModal from './MemberListModal'
+import type { DmRoom } from '@/types'
 
 interface Props {
   roomId: string
@@ -23,6 +24,11 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
   const typing = useChatStore((s) => s.typing[roomId] ?? [])
   const hasMore = useChatStore((s) => s.hasMoreMessages[roomId] ?? true)
   const room = useChatStore((s) => [...s.rooms, ...s.dmRooms].find((r) => r.id === roomId))
+  // DM방의 room.name은 "dm-{uuid}-{uuid}" 형태의 내부 식별자라 그대로 보여주면 안 되고,
+  // 대신 이미 갖고 있는 상대방 정보(dm_partner)의 username을 제목으로 사용.
+  // s.rooms에 담긴 항목은 항상 is_dm=false, s.dmRooms에 담긴 항목만 is_dm=true라서
+  // is_dm이 true면 실제로는 DmRoom이라고 안전하게 단정할 수 있음
+  const roomTitle = room?.is_dm ? (room as DmRoom).dm_partner.username : room?.name ?? ''
   const { fetchMessages, fetchOlderMessages } = useChatStore()
   const { user } = useAuthStore()
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -67,7 +73,7 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
       <div style={styles.header}>
         <div style={styles.headerLeft}>
           <span style={styles.roomPrefix}>{room?.is_dm ? '' : '#'}</span>
-          <span style={styles.roomName}>{room?.name ?? ''}</span>
+          <span style={styles.roomName}>{roomTitle}</span>
         </div>
         <div style={styles.headerActions}>
           <button style={styles.membersBtn} onClick={() => setShowMembers(true)}>멤버</button>
