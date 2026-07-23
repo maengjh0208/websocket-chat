@@ -12,6 +12,7 @@ body {
 }
 
 :root {
+  color-scheme: light;
   --bg-auth: linear-gradient(135deg, #eef2ff 0%, #faf5ff 100%);
   --bg-surface: #ffffff;
   --bg-elevated: #f8fafc;
@@ -37,6 +38,7 @@ body {
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg-auth: linear-gradient(135deg, #0f172a 0%, #1a1035 100%);
   --bg-surface: #1e293b;
   --bg-elevated: #0f172a;
