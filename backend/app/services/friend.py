@@ -3,13 +3,15 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import BadRequestError, ErrorCode, NotFoundError
+from app.core.enums import WSMessageType
 from app.crud import friend as crud_friend
 from app.crud import user as crud_user
-from app.domain.friend import FriendEntity, FriendRequestEntity
+from app.domain.friend import FriendRequestEntity
 from app.managers.presence import get_online_peer_ids
+from app.managers import pubsub
 
 
-async def send_friend_request(user_id: UUID, target_id: UUID, session: AsyncSession) -> None:
+async def send_friend_request(user_id: UUID, username: str, target_id: UUID, session: AsyncSession) -> None:
     if user_id == target_id:
         raise BadRequestError(error_code=ErrorCode.INVALID_REQUEST)
 
@@ -21,17 +23,39 @@ async def send_friend_request(user_id: UUID, target_id: UUID, session: AsyncSess
 
     await crud_friend.send_request(session=session, requester_id=user_id, addressee_id=target_id)
 
+    await pubsub.publish(
+        {
+            "user_ids": [str(target_id)],
+            "payload": {
+                "type": WSMessageType.FRIEND_REQUEST,
+                "user_id": str(user_id),
+                "username": username,
+            },
+        }
+    )
+
 
 async def get_received_friend_requests(user_id: UUID, session: AsyncSession) -> list[FriendRequestEntity]:
     return await crud_friend.get_received_requests(session, user_id)
 
 
-async def accept_request(user_id: UUID, requester_id: UUID, session: AsyncSession) -> None:
+async def accept_request(user_id: UUID, username: str, requester_id: UUID, session: AsyncSession) -> None:
     if user_id == requester_id:
         raise BadRequestError(error_code=ErrorCode.INVALID_REQUEST)
 
     if not await crud_friend.accept_request(session=session, requester_id=requester_id, addressee_id=user_id):
         raise NotFoundError(error_code=ErrorCode.FRIEND_REQUEST_NOT_FOUND)
+
+    await pubsub.publish(
+        {
+            "user_ids": [str(requester_id)],
+            "payload": {
+                "type": WSMessageType.FRIEND_ACCEPT,
+                "user_id": str(user_id),
+                "username": username,
+            },
+        }
+    )
 
 
 async def get_friends(user_id: UUID, session: AsyncSession) -> list[dict]:
@@ -61,3 +85,13 @@ async def delete_friend(user_id: UUID, friend_id: UUID, session: AsyncSession) -
 
     if not await crud_friend.delete_friend(session=session, user_id=user_id, friend_id=friend_id):
         raise NotFoundError(error_code=ErrorCode.FRIEND_NOT_FOUND)
+
+    await pubsub.publish(
+        {
+            "user_ids": [str(friend_id)],
+            "payload": {
+                "type": WSMessageType.FRIEND_DELETE,
+                "user_id": str(user_id),
+            },
+        }
+    )

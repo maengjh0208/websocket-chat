@@ -10,6 +10,9 @@ interface FriendState {
   sendRequest: (targetId: string) => Promise<void>
   acceptRequest: (requesterId: string) => Promise<void>
   deleteFriend: (friendId: string) => Promise<void>
+
+  // WebSocket 이벤트 수신 시 호출 (상대방이 나를 친구 삭제한 경우 — API 호출 없이 로컬 상태만 반영)
+  removeFriend: (friendId: string) => void
 }
 
 export const useFriendStore = create<FriendState>((set) => ({
@@ -41,6 +44,10 @@ export const useFriendStore = create<FriendState>((set) => ({
 
   deleteFriend: async (friendId: string) => {
     await apiClient.delete(`/friends/${friendId}`)
+    set((state) => ({ friends: state.friends.filter((f) => f.id !== friendId) }))
+  },
+
+  removeFriend: (friendId: string) => {
     set((state) => ({ friends: state.friends.filter((f) => f.id !== friendId) }))
   },
 }))

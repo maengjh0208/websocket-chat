@@ -37,7 +37,6 @@ class ConnectionManager:
         payload: dict,
         exclude_user_id: UUID | None = None,
     ) -> None:
-        # 채팅방 멤버 전체에게 메세지 뿌리기
         for user_id in user_ids:
             if user_id == exclude_user_id:
                 continue

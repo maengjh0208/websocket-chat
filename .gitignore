@@ -222,3 +222,7 @@ __marimo__/
 *.pyc
 node_modules/
 .vite/
+frontend/package-lock.json
+
+# 로컬 AI 도구(MCP 등)가 생성하는 런타임 상태 저장소 (앱 코드와 무관)
+data/

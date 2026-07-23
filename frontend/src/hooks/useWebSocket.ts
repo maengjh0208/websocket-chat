@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useChatStore } from '@/store/chat'
+import { useFriendStore } from '@/store/friend'
 import type { WSPayload } from '@/types'
 
 const WS_URL = import.meta.env.VITE_WS_URL
@@ -30,7 +31,8 @@ export function useWebSocket(token: string | null) {
         return
       }
 
-      const { addMessage, setTyping, setOnline } = useChatStore.getState()
+      const { addMessage, setTyping, setOnline, fetchRooms, fetchDmRooms } = useChatStore.getState()
+      const { fetchPendingRequests, fetchFriends, removeFriend } = useFriendStore.getState()
 
       if (payload.type === 'message.new') {
         addMessage({
@@ -44,6 +46,25 @@ export function useWebSocket(token: string | null) {
         setTyping(payload.room_id, payload.username, payload.is_typing)
       } else if (payload.type === 'presence.update') {
         setOnline(payload.user_id, payload.status)
+      } else if (payload.type === 'friend.request') {
+        // 상대가 나에게 친구 요청을 보낸 경우. 서버 페이로드엔 요청 1건 정보만 담겨있지만,
+        // 목록 자체는 최신 상태를 보장하기 위해 REST로 다시 조회함 (다른 필드 누락 걱정 없이 서버가 정답).
+        fetchPendingRequests()
+      } else if (payload.type === 'friend.accept') {
+        // 내가 보낸 친구 요청을 상대가 수락한 경우. 친구 목록을 다시 조회해서 반영.
+        fetchFriends()
+      } else if (payload.type === 'friend.delete') {
+        // 상대가 나를 친구 삭제한 경우. 삭제는 REST 재조회 없이도 어떤 항목을 지워야 할지
+        // payload의 user_id만으로 알 수 있으니, 로컬 상태에서 바로 필터링
+        removeFriend(payload.user_id)
+      } else if (payload.type === 'room.invite') {
+        // 그룹방 초대 / DM 신규 생성 둘 다 이 타입으로 오되, is_dm으로 구분해서
+        // 해당하는 목록만 다시 조회
+        if (payload.is_dm) {
+          fetchDmRooms()
+        } else {
+          fetchRooms()
+        }
       }
     }
 

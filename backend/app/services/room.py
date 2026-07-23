@@ -1,10 +1,12 @@
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.enums import WSMessageType
 from app.crud import room as crud_room
 from app.domain.room import RoomEntity
 from app.core.exceptions import BadRequestError, ErrorCode, ForbiddenError, NotFoundError
 from app.domain.user import UserEntity
+from app.managers import pubsub
 
 
 async def get_rooms(user_id: UUID, session: AsyncSession) -> list[RoomEntity]:
@@ -24,11 +26,26 @@ async def create_room(name: str, user_id: UUID, session: AsyncSession) -> RoomEn
 
 
 async def create_dm(user_id: UUID, target_id: UUID, session: AsyncSession) -> RoomEntity:
-    return await crud_room.create_dm(
+    is_new, room = await crud_room.create_dm(
         session=session,
         user_id=user_id,
         target_id=target_id,
     )
+
+    if is_new:
+        await pubsub.publish(
+            {
+                "user_ids": [str(target_id)],
+                "payload": {
+                    "type": WSMessageType.ROOM_INVITE,
+                    "room_id": str(room.id),
+                    "room_name": room.name,
+                    "is_dm": room.is_dm,
+                },
+            }
+        )
+
+    return room
 
 
 async def invite_members(user_id: UUID, target_id: UUID, room_id: UUID, session: AsyncSession) -> None:
@@ -44,6 +61,18 @@ async def invite_members(user_id: UUID, target_id: UUID, room_id: UUID, session:
 
     if not await crud_room.is_room_member(session=session, user_id=target_id, room_id=room_id):
         await crud_room.add_room_member(session=session, user_id=target_id, room_id=room_id)
+
+        await pubsub.publish(
+            {
+                "user_ids": [str(target_id)],
+                "payload": {
+                    "type": WSMessageType.ROOM_INVITE,
+                    "room_id": str(room.id),
+                    "room_name": room.name,
+                    "is_dm": room.is_dm,
+                },
+            }
+        )
 
 
 async def leave_room(room_id: UUID, user_id: UUID, session: AsyncSession) -> None:

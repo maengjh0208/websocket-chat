@@ -51,7 +51,38 @@ export interface WSTypingIndicator {
   is_typing: boolean
 }
 
-export type WSPayload = WSMessageNew | WSPresenceUpdate | WSTypingIndicator
+export interface WSFriendRequest {
+  type: 'friend.request'
+  user_id: string
+  username: string
+}
+
+export interface WSFriendAccept {
+  type: 'friend.accept'
+  user_id: string
+  username: string
+}
+
+export interface WSFriendDelete {
+  type: 'friend.delete'
+  user_id: string
+}
+
+export interface WSRoomInvite {
+  type: 'room.invite'
+  room_id: string
+  room_name: string
+  is_dm: boolean
+}
+
+export type WSPayload =
+  | WSMessageNew
+  | WSPresenceUpdate
+  | WSTypingIndicator
+  | WSFriendRequest
+  | WSFriendAccept
+  | WSFriendDelete
+  | WSRoomInvite
 
 export interface AuthTokens {
   access_token: string

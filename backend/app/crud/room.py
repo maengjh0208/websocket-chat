@@ -126,7 +126,7 @@ async def get_dm_rooms_by_user(session: AsyncSession, user_id: UUID) -> list[Roo
     ]
 
 
-async def create_dm(session: AsyncSession, user_id: UUID, target_id: UUID) -> RoomEntity:
+async def create_dm(session: AsyncSession, user_id: UUID, target_id: UUID) -> tuple[bool, RoomEntity]:
     # 기존 dm 방이 있는지 확인 (두 유저가 공통으로 속한 DM 방 조회)
     my_dm_rooms = (
         select(RoomMember.room_id)
@@ -157,7 +157,7 @@ async def create_dm(session: AsyncSession, user_id: UUID, target_id: UUID) -> Ro
 
         await session.flush()
 
-        return RoomEntity(
+        return False, RoomEntity(
             id=existing.id,
             name=existing.name,
             is_dm=existing.is_dm,
@@ -177,7 +177,7 @@ async def create_dm(session: AsyncSession, user_id: UUID, target_id: UUID) -> Ro
         session.add(room_member_target)
         await session.flush()
 
-        return RoomEntity(
+        return True, RoomEntity(
             id=new_room.id,
             name=new_room.name,
             is_dm=new_room.is_dm,

@@ -26,6 +26,7 @@ async def send_friend_request(
 ):
     await friend_service.send_friend_request(
         user_id=current_user.id,
+        username=current_user.username,
         target_id=body.target_id,
         session=session,
     )
@@ -58,6 +59,7 @@ async def accept_friend_request(
 ):
     await friend_service.accept_request(
         user_id=current_user.id,
+        username=current_user.username,
         requester_id=requester_id,
         session=session,
     )
