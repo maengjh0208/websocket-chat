@@ -10,6 +10,7 @@ export interface Room {
   is_dm: boolean
   created_by: string
   created_at: string
+  unread_count: number
 }
 
 export interface DmRoom extends Room {

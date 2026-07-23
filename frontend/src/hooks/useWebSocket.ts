@@ -31,7 +31,8 @@ export function useWebSocket(token: string | null) {
         return
       }
 
-      const { addMessage, setTyping, setOnline, fetchRooms, fetchDmRooms } = useChatStore.getState()
+      const { addMessage, setTyping, setOnline, fetchRooms, fetchDmRooms, incrementUnread, activeRoomId } =
+        useChatStore.getState()
       const { fetchPendingRequests, fetchFriends, removeFriend } = useFriendStore.getState()
 
       if (payload.type === 'message.new') {
@@ -42,6 +43,13 @@ export function useWebSocket(token: string | null) {
           content: payload.content,
           created_at: payload.created_at,
         })
+        // 지금 열어보고 있는 방이 아니면 안읽음 뱃지 +1.
+        // 내가 보낸 메시지도 이 이벤트를 그대로 받긴 하지만, 메시지는 항상 activeRoomId로만
+        // 보낼 수 있어서(MessageInput이 현재 열린 방 기준으로 동작) room_id === activeRoomId가 되어
+        // 자연스럽게 카운트되지 않음 — 별도로 내 메시지인지 구분할 필요가 없음
+        if (payload.room_id !== activeRoomId) {
+          incrementUnread(payload.room_id)
+        }
       } else if (payload.type === 'typing.indicator') {
         setTyping(payload.room_id, payload.username, payload.is_typing)
       } else if (payload.type === 'presence.update') {

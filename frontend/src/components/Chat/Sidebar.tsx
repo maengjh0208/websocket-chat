@@ -65,6 +65,7 @@ export default function Sidebar({ onSelectRoom, activeRoomId }: Props) {
       >
         {prefix}
         <span style={styles.roomName}>{label}</span>
+        {room.unread_count > 0 && <span style={styles.unreadBadge}>{room.unread_count > 99 ? '99+' : room.unread_count}</span>}
       </button>
       {hoveredRoomId === room.id && (
         <button onClick={() => leaveRoom(room.id)} style={styles.leaveBtn} title="나가기">
@@ -256,8 +257,13 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#fff', fontSize: '0.65rem', fontWeight: 700,
   },
   roomName: {
-    fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis',
+    flex: 1, fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis',
     whiteSpace: 'nowrap', fontWeight: 500,
+  },
+  unreadBadge: {
+    flexShrink: 0, minWidth: 16, height: 16, padding: '0 4px', borderRadius: 8,
+    background: '#ef4444', color: '#fff', fontSize: '0.65rem', fontWeight: 700,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
   },
   leaveBtn: {
     flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer',
