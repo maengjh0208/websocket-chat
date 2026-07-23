@@ -44,6 +44,13 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
     skipScrollRef.current = false
     fetchMessages(roomId)
     onReadUpdate()
+
+    // cleanup: 다른 방으로 이동하거나(roomId 변경) 방을 완전히 닫을 때(모바일 뒤로가기 등
+    // 컴포넌트 언마운트) 실행됨. 방을 나가는 시점에 한 번 더 read.update를 보내서,
+    // 방에 머무는 동안 오간 메시지까지 last_read_at에 반영되게 함
+    return () => {
+      onReadUpdate()
+    }
   }, [roomId])
 
   useEffect(() => {
