@@ -37,9 +37,10 @@ jobs:
     env:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_chat
       TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_chat
+      REDIS_URL: redis://localhost:6379
+      TEST_REDIS_URL: redis://localhost:6379
       SECRET_KEY: test-secret-key
       ACCESS_TOKEN_EXPIRE_DAYS: 7
-      REDIS_URL: redis://localhost:6379
     steps:
       - uses: actions/checkout@v4
 
