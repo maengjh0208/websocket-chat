@@ -9,6 +9,7 @@
 from httpx import ASGITransport, AsyncClient
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncSession
+import redis.asyncio as aioredis
 
 from app.core.config import settings
 from app.db.models import Base
@@ -47,3 +48,21 @@ async def client(db):
 
     # 테스트가 끝나면 교체했던 의존성을 원래대로 되돌림 (이걸 안하면 다음 테스트에서도 테스트 DB가 주입된채로 남아있게 됨.)
     app.dependency_overrides.clear()
+
+
+# autouse=True: 모든 테스트에 자동 적용
+@pytest_asyncio.fixture(autouse=True)
+# monkeypatch: pytest가 기본 제공하는 fixture
+async def override_redis(monkeypatch):
+    # 테스트 전용 redis client 생성 (localhost로 접속)
+    test_redis_client = aioredis.from_url(url=settings.TEST_REDIS_URL, decode_responses=True)
+
+    # monkeypatch.setattr("경로.이름", 값): 문자여로 된 경로를 보고 그 자리의 변수를 바꿔침.
+    monkeypatch.setattr("app.core.redis.redis_client", test_redis_client)
+    monkeypatch.setattr("app.managers.pubsub.redis_client", test_redis_client)
+    monkeypatch.setattr("app.managers.presence.redis_client", test_redis_client)
+
+    # yield 이후 테스트 함수 하나 끝날때마다 실행됨. db fixture가 테이블을 drop 하는것 처럼 여기선 만들어둔 연결을 정리.
+    yield
+
+    await test_redis_client.aclose()
