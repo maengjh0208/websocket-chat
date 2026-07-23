@@ -25,6 +25,7 @@ class RoomResponse(BaseModel):
     is_dm: bool
     created_by: UUID
     created_at: datetime
+    unread_count: int | None = None
 
 
 class DmRoomResponse(RoomResponse):

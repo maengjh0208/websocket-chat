@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import intersect, select, update
+from sqlalchemy import func, intersect, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Room, RoomMember, User
+from app.db.models import Message, Room, RoomMember, User
 from app.domain.room import RoomEntity
 from app.domain.user import UserEntity
 
@@ -53,8 +53,27 @@ async def get_room_by_id(session: AsyncSession, room_id: UUID) -> RoomEntity | N
 
 
 async def get_rooms_by_user(session: AsyncSession, user_id: UUID) -> list[RoomEntity]:
+    unread_count_subquery = (
+        select(func.count(Message.id))
+        .where(
+            Message.room_id == Room.id,
+            Message.sender_id != user_id,
+            Message.created_at > RoomMember.last_read_at,
+        )
+        .correlate(Room, RoomMember)  # 바깥 쿼리의 Room, RoomMember 와 연관되어 있음을 명시함.
+        .scalar_subquery()
+        .label("unread_count")
+    )
+
     query = (
-        select(Room)
+        select(
+            Room.id,
+            Room.name,
+            Room.is_dm,
+            Room.created_at,
+            Room.created_by,
+            unread_count_subquery,
+        )
         .join(RoomMember, Room.id == RoomMember.room_id)
         .where(
             RoomMember.user_id == user_id,
@@ -64,7 +83,7 @@ async def get_rooms_by_user(session: AsyncSession, user_id: UUID) -> list[RoomEn
     )
 
     result = await session.execute(query)
-    rooms = result.scalars().all()
+    rooms = result.all()
 
     return [
         RoomEntity(
@@ -73,6 +92,7 @@ async def get_rooms_by_user(session: AsyncSession, user_id: UUID) -> list[RoomEn
             is_dm=room.is_dm,
             created_by=room.created_by,
             created_at=room.created_at,
+            unread_count=room.unread_count,
         )
         for room in rooms
     ]
@@ -89,6 +109,20 @@ async def get_dm_rooms_by_user(session: AsyncSession, user_id: UUID) -> list[Roo
         )
     )
 
+    unread_count_subquery = (
+        select(func.count(Message.id))
+        .join(RoomMember, RoomMember.room_id == Message.room_id)
+        .where(
+            Message.room_id == Room.id,
+            Message.sender_id != user_id,
+            RoomMember.user_id == user_id,
+            Message.created_at > RoomMember.last_read_at,
+        )
+        .correlate(Room)
+        .scalar_subquery()
+        .label("unread_count")
+    )
+
     query = (
         select(
             Room.id,
@@ -98,6 +132,7 @@ async def get_dm_rooms_by_user(session: AsyncSession, user_id: UUID) -> list[Roo
             Room.created_at,
             User.id.label("user_id"),
             User.username,
+            unread_count_subquery,
         )
         .join(RoomMember, RoomMember.room_id == Room.id)
         .join(User, User.id == RoomMember.user_id)
@@ -121,6 +156,7 @@ async def get_dm_rooms_by_user(session: AsyncSession, user_id: UUID) -> list[Roo
                 id=row.user_id,
                 username=row.username,
             ),
+            unread_count=row.unread_count,
         )
         for row in rows
     ]

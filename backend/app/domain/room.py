@@ -13,3 +13,4 @@ class RoomEntity:
     created_by: UUID
     created_at: datetime
     dm_partner: UserEntity | None = None
+    unread_count: int | None = None
