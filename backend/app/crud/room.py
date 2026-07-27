@@ -78,7 +78,7 @@ async def get_rooms_by_user(session: AsyncSession, user_id: UUID) -> list[RoomEn
         .where(
             RoomMember.user_id == user_id,
             RoomMember.left_at.is_(None),
-            Room.is_dm == False,
+            Room.is_dm.is_(False),
         )
     )
 
@@ -105,7 +105,7 @@ async def get_dm_rooms_by_user(session: AsyncSession, user_id: UUID) -> list[Roo
         .where(
             RoomMember.user_id == user_id,
             RoomMember.left_at.is_(None),
-            Room.is_dm == True,
+            Room.is_dm.is_(True),
         )
     )
 
@@ -167,13 +167,13 @@ async def create_dm(session: AsyncSession, user_id: UUID, target_id: UUID) -> tu
     my_dm_rooms = (
         select(RoomMember.room_id)
         .join(Room, Room.id == RoomMember.room_id)
-        .where(RoomMember.user_id == user_id, Room.is_dm == True)
+        .where(RoomMember.user_id == user_id, Room.is_dm.is_(True))
     )
 
     target_dm_rooms = (
         select(RoomMember.room_id)
         .join(Room, Room.id == RoomMember.room_id)
-        .where(RoomMember.user_id == target_id, Room.is_dm == True)
+        .where(RoomMember.user_id == target_id, Room.is_dm.is_(True))
     )
 
     common = intersect(my_dm_rooms, target_dm_rooms).subquery()  # 교집합

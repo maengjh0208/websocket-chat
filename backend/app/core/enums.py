@@ -25,6 +25,9 @@ class WSMessageType(StrEnum):
 
     READ_UPDATE = "read.update"
 
+    REACTION_TOGGLE = "reaction.toggle"
+    REACTION_UPDATE = "reaction.update"
+
     FRIEND_REQUEST = "friend.request"
     FRIEND_ACCEPT = "friend.accept"
     FRIEND_DELETE = "friend.delete"

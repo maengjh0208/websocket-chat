@@ -65,8 +65,19 @@ FK로 묶어두면 "비활성화됐지만 여전히 참조되는 행"을 신경 
 달라져서 카운트가 실제와 어긋날 수 있다. 대신 리액션이 바뀔 때마다 **해당 메시지의 이모지별 집계 전체**를
 서버가 다시 계산해서 브로드캐스트하면, 클라이언트는 그 값으로 덮어쓰기만 하면 되므로 항상 정확하다.
 
+### `count`/`reacted_by_me`를 서버가 미리 계산하지 않고 `user_ids`를 그대로 보내는 이유
+
+WS 브로드캐스트는 한 payload가 방 멤버 전체에게 동일하게 나간다 (`message.new`, `presence.update`와 동일한 구조).
+`reacted_by_me`는 "보는 사람이 누구냐"에 따라 값이 달라지는데, 서버가 토글한 유저 한 명 기준으로 미리 계산해서
+박아버리면 나머지 멤버들에게는 틀린 값이 나간다. 그래서 서버는 이모지별로 반응한 **`user_ids` 원본**만 실어 보내고,
+`count`(길이)와 `reacted_by_me`(내 id 포함 여부)는 클라이언트가 각자 계산한다.
+`ChatWindow.tsx`에서 이미 `isMe={msg.sender.id === user?.id}`로 하고 있는 것과 같은 패턴.
+
+부가 효과: `user_ids`를 그대로 갖고 있으면 "누가 반응했는지" 툴팁도 백엔드 추가 작업 없이 프론트에서 바로 구현 가능
+(→ 아래 프론트 Step에서 다룸).
+
 ```
-ReactionSummary = { emoji: str, count: int, reacted_by_me: bool }
+ReactionSummary = { emoji: str, user_ids: list[UUID] }
 Message.reactions: list[ReactionSummary]
 ```
 
@@ -86,7 +97,7 @@ Alembic 마이그레이션 생성 후, 기본 이모지 6종을 시드 데이터
 **파일:** `backend/app/crud/reaction.py` (신규)
 
 ```python
-async def get_allowed_reactions(session: AsyncSession) -> list[AllowedReaction]:
+async def get_allowed_reactions(session: AsyncSession) -> list[ReactionEntity]:
     # is_active=True, sort_order 순 정렬
 
 async def toggle_reaction(
@@ -95,21 +106,20 @@ async def toggle_reaction(
     # 기존 (message_id, user_id, emoji) 행이 있으면 삭제하고 False 반환
     # 없으면 추가하고 True 반환
 
-async def get_reactions_for_message(
-    session: AsyncSession, message_id: UUID, current_user_id: UUID
-) -> list[ReactionSummary]:
-    # message_reactions를 emoji로 GROUP BY, COUNT
-    # 각 그룹에 current_user_id가 포함되는지 여부(reacted_by_me)도 같이 계산
-
 async def get_reactions_by_message_ids(
-    session: AsyncSession, message_ids: list[UUID], current_user_id: UUID
-) -> dict[UUID, list[ReactionSummary]]:
-    # 메시지 목록(GET /rooms/{room_id}/messages) 조회 시 배치로 한 번에 가져오기 위함
-    # message_id별로 묶어서 반환
+    session: AsyncSession, message_ids: list[UUID]
+) -> dict[UUID, list[ReactionSummaryEntity]]:
+    # message_reactions를 message_id, emoji로 묶어서 user_ids 리스트로 집계
+    # (count/reacted_by_me는 여기서 계산하지 않음 — 위 "설계" 섹션 참고)
+    # 메시지 목록(GET /rooms/{room_id}/messages) 조회 시 배치로 한 번에 가져오기 위함이기도 함
 ```
 
 참고: `get_reactions_by_message_ids`가 필요한 이유는 `services/message.py`의 `get_messages`가
 메시지를 리스트로 반환할 때, 각 메시지마다 리액션을 N+1 쿼리로 따로 조회하지 않기 위함.
+
+이 Step에서 `crud/message.py`에도 `get_room_id_by_message(session, message_id) -> UUID | None` 추가 필요
+(리액션 토글 시 권한 체크·브로드캐스트 대상 조회에 `room_id`가 필요한데 지금은 `message_id`만 갖고 있음).
+`domain/message.py`의 `MessageEntity`에도 `reactions: list[ReactionSummaryEntity] = field(default_factory=list)` 추가.
 
 ---
 
@@ -120,13 +130,21 @@ async def get_reactions_by_message_ids(
 ```python
 async def toggle_reaction(
     user_id: UUID, message_id: UUID, emoji: str, session: AsyncSession
-) -> list[ReactionSummary]:
-    # 1. message로부터 room_id 조회 (crud_message에 get_room_id_by_message 같은 조회 필요할 수 있음)
+) -> tuple[UUID, list[ReactionSummaryEntity]]:
+    # 1. crud_message.get_room_id_by_message로 room_id 조회, None이면 ForbiddenError
     # 2. is_room_member 체크 (방 멤버만 리액션 가능 — 기존 message 서비스 패턴과 동일)
-    # 3. emoji가 allowed_reactions에 있고 is_active=True인지 검증 (아니면 ForbiddenError/ValidationError)
+    #    → room_id가 None이거나 멤버가 아니면 둘 다 ForbiddenError로 통일
+    #      (존재하지 않는 message_id인지 권한 문제인지 구분해서 알려주면 enumeration에 악용될 수 있음)
+    # 3. emoji가 allowed_reactions에 있는지 검증 (아니면 BadRequestError)
     # 4. crud_reaction.toggle_reaction 호출
-    # 5. crud_reaction.get_reactions_for_message로 갱신된 상태 반환 (WS 브로드캐스트용)
+    # 5. crud_reaction.get_reactions_by_message_ids(session, [message_id])로 갱신된 상태 조회
+    # 6. (room_id, reactions) 튜플로 반환 — WS 핸들러가 브로드캐스트 대상/내용 둘 다 필요로 함
 ```
+
+기존 `websocket.py`의 다른 분기(`MESSAGE_SEND`, `TYPING`)는 서비스 레이어 없이 크루드를 직접 호출해서
+`if 아니면 continue`로 처리하지만, 리액션은 권한 체크 + 허용목록 체크가 겹쳐서 조건이 더 복잡하므로
+서비스 함수로 묶는다. 대신 Step 5에서 WS 핸들러가 `try: ... except (ForbiddenError, BadRequestError): continue`로
+감싸서, 결과적으로 기존 관례(이상한 요청은 조용히 무시)와 동일하게 동작하도록 맞춘다.
 
 **파일:** `backend/app/services/message.py` 수정
 
@@ -192,8 +210,7 @@ elif msg_type == WSMessageType.REACTION_TOGGLE:
 ```ts
 export interface ReactionSummary {
   emoji: string
-  count: number
-  reacted_by_me: boolean
+  user_ids: string[]   // count는 .length, reacted_by_me는 user_ids.includes(내 id)로 프론트에서 계산
 }
 
 // Message에 reactions 필드 추가
@@ -217,6 +234,8 @@ export interface WSReactionUpdate {
 - `allowedReactions: string[]` 상태 + `fetchAllowedReactions()` 액션 (`GET /reactions/allowed`, 앱 진입 시 1회 호출)
 - WS 메시지 핸들러에 `reaction.update` 케이스 추가: `messages[room_id]`에서 `message_id`가 일치하는 메시지를 찾아 `reactions` 필드만 교체
 - 리액션 토글 WS 전송 함수 (`sendReaction(messageId, emoji)` 같은 형태로, 기존 `onSendMessage`/`onTypingStart`가 WS로 보내는 지점과 동일한 곳에 추가)
+- **`fetchRoomMembers` 호출 시점 변경**: 현재는 `MemberListModal.tsx`가 열릴 때만 `roomMembers[roomId]`를 채워서, 모달을 안 연 상태에서 리액션 툴팁을 띄우면 이름을 못 찾는 경우가 생김. `ChatWindow.tsx`의 방 입장 `useEffect`(`fetchMessages`, `onReadUpdate` 부르는 자리)로 `fetchRoomMembers(roomId)` 호출을 옮겨서, 방에 들어가는 시점에 항상 멤버 목록을 들고 있게 한다.
+  - 참고: `roomMembers`는 `left_at IS NULL`인 현재 멤버만 담고 있어서, 리액션 남긴 뒤 방을 나간 유저는 이름 매칭이 안 될 수 있음 (매칭 실패 시 "알 수 없는 사용자" 등으로 처리, 지금 스코프에서 크게 중요하지 않은 엣지케이스).
 
 ---
 
@@ -225,8 +244,9 @@ export interface WSReactionUpdate {
 **파일:** `frontend/src/components/Chat/MessageBubble.tsx`
 
 - 버블 호버 시 "리액션 추가" 버튼(+) 노출 → 클릭 시 `allowedReactions` 기반 이모지 피커(작은 팝오버) 표시
-- 버블 하단에 리액션이 있으면 이모지별 pill 렌더링: `😂 3` 형태, `reacted_by_me`인 경우 배경색 강조(`--room-active-bg` 등 기존 테마 변수 재사용)
+- 버블 하단에 리액션이 있으면 이모지별 pill 렌더링: `😂 3` 형태, 현재 유저의 id가 `user_ids`에 포함되면 배경색 강조(`--room-active-bg` 등 기존 테마 변수 재사용)
 - pill 클릭 시 토글 요청 전송 (이미 반응한 것 클릭 → 취소, 안 한 것 클릭 → 추가)
+- **누가 반응했는지 툴팁**: pill에 마우스 호버(또는 모바일은 길게 누르기) 시, `reaction.user_ids`를 `roomMembers[roomId]`에서 id→username으로 매핑해서 "철수, 영희님이 반응했습니다" 형태로 표시. 이름을 못 찾는 id(방을 나간 유저)는 목록에서 제외.
 
 ---
 

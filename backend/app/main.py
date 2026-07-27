@@ -10,6 +10,7 @@ from app.api.routes.auth import router as auth_router
 from app.api.routes.users import router as users_router
 from app.api.routes.rooms import router as rooms_router
 from app.api.routes.friends import router as friends_router
+from app.api.routes.reactions import router as reactions_router
 from app.api.websocket import router as websocket_router
 from app.api.websocket import handle_pubsub_message
 from app.managers import pubsub
@@ -68,6 +69,7 @@ app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(rooms_router)
 app.include_router(friends_router)
+app.include_router(reactions_router)
 
 app.include_router(websocket_router)
 

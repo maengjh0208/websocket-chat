@@ -73,6 +73,7 @@ class AllowedReaction(Base):
 
 class MessageReaction(Base):
     __tablename__ = "message_reactions"
+
     message_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("messages.id", ondelete="CASCADE"), primary_key=True
     )

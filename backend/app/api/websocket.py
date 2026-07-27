@@ -4,7 +4,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from jose import JWTError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud import room as crud_room
 from app.crud import user as crud_user
@@ -15,6 +14,8 @@ from app.db.session import get_session
 from app.core.security import decode_token
 from app.core.enums import PresenceStatus, WSCloseCode, WSMessageType
 from app.managers import pubsub
+from app.core.exceptions import AppError
+from app.services import reaction as reaction_service
 
 router = APIRouter()
 
@@ -148,6 +149,35 @@ async def websocket_endpoint(
                         session=session,
                         room_id=room_id,
                         user_id=user.id,
+                    )
+                elif msg_type == WSMessageType.REACTION_TOGGLE:
+                    message_id = UUID(payload["message_id"])
+                    emoji = str(payload.get("emoji", ""))
+
+                    try:
+                        room_id, reactions = await reaction_service.toggle_reaction(
+                            user_id=user.id,
+                            message_id=message_id,
+                            emoji=emoji,
+                            session=session,
+                        )
+                    except AppError:
+                        continue
+
+                    member_ids = await crud_room.get_room_member_ids(session, room_id)
+
+                    await pubsub.publish(
+                        {
+                            "user_ids": [str(uid) for uid in member_ids],
+                            "payload": {
+                                "type": WSMessageType.REACTION_UPDATE,
+                                "message_id": str(message_id),
+                                "room_id": str(room_id),
+                                "reactions": [
+                                    {"emoji": r.emoji, "user_ids": [str(uid) for uid in r.user_ids]} for r in reactions
+                                ],
+                            },
+                        }
                     )
                 elif msg_type == WSMessageType.PING:
                     await presence.set_online(user.id)

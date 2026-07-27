@@ -60,3 +60,9 @@ async def create_message(
     await session.flush()
 
     return message.id, message.created_at
+
+
+async def get_room_id_by_message(session: AsyncSession, message_id: UUID) -> UUID | None:
+    query = select(Message.room_id).where(Message.id == message_id)
+    result = await session.execute(query)
+    return result.scalar_one_or_none()
