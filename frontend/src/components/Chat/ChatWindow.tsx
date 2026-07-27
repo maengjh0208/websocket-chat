@@ -14,23 +14,27 @@ interface Props {
   onTypingStart: () => void
   onTypingStop: () => void
   onReadUpdate: () => void
+  onReact: (messageId: string, emoji: string) => void
   onBack?: () => void // 모바일에서만 전달됨 — 목록 화면으로 돌아가는 뒤로가기 버튼용
 }
 
 // WebSocket 연결 포인트:
 // - 방에 입장할 때 read.update push → 서버가 last_read_at 업데이트
 // - 새 message.new가 수신되면 addMessage(store)를 통해 자동으로 목록에 추가됨
-export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTypingStop, onReadUpdate, onBack }: Props) {
+// - 리액션 pill 클릭 시 onReact → reaction.toggle push, 갱신된 상태는 reaction.update로 돌아와 store가 반영
+export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTypingStop, onReadUpdate, onReact, onBack }: Props) {
   const messages = useChatStore((s) => s.messages[roomId] ?? [])
   const typing = useChatStore((s) => s.typing[roomId] ?? [])
   const hasMore = useChatStore((s) => s.hasMoreMessages[roomId] ?? true)
   const room = useChatStore((s) => [...s.rooms, ...s.dmRooms].find((r) => r.id === roomId))
+  const roomMembers = useChatStore((s) => s.roomMembers[roomId] ?? [])
+  const allowedReactions = useChatStore((s) => s.allowedReactions)
   // DM방의 room.name은 "dm-{uuid}-{uuid}" 형태의 내부 식별자라 그대로 보여주면 안 되고,
   // 대신 이미 갖고 있는 상대방 정보(dm_partner)의 username을 제목으로 사용.
   // s.rooms에 담긴 항목은 항상 is_dm=false, s.dmRooms에 담긴 항목만 is_dm=true라서
   // is_dm이 true면 실제로는 DmRoom이라고 안전하게 단정할 수 있음
   const roomTitle = room?.is_dm ? (room as DmRoom).dm_partner.username : room?.name ?? ''
-  const { fetchMessages, fetchOlderMessages } = useChatStore()
+  const { fetchMessages, fetchOlderMessages, fetchRoomMembers } = useChatStore()
   const { user } = useAuthStore()
   const bottomRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
@@ -43,6 +47,9 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
     setIsLoadingMore(false)
     skipScrollRef.current = false
     fetchMessages(roomId)
+    // 리액션 "누가 반응했는지" 툴팁에서 user_id → username을 바로 찾을 수 있도록,
+    // 멤버 목록 모달을 열 때까지 기다리지 않고 방 입장 시점에 미리 받아둠
+    fetchRoomMembers(roomId)
     onReadUpdate()
 
     // cleanup: 다른 방으로 이동하거나(roomId 변경) 방을 완전히 닫을 때(모바일 뒤로가기 등
@@ -110,7 +117,15 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
           return (
             <div key={msg.id}>
               {showSeparator && <DateSeparator dateStr={msg.created_at} />}
-              <MessageBubble message={msg} isMe={msg.sender.id === user?.id} showHeader={showHeader} />
+              <MessageBubble
+                message={msg}
+                isMe={msg.sender.id === user?.id}
+                showHeader={showHeader}
+                currentUserId={user?.id}
+                allowedReactions={allowedReactions}
+                roomMembers={roomMembers}
+                onReact={onReact}
+              />
             </div>
           )
         })}
@@ -179,7 +194,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0.35rem 0.75rem', background: '#4f46e5', color: '#fff',
     border: 'none', borderRadius: 6, fontSize: '0.8rem', cursor: 'pointer', fontWeight: 500,
   },
-  messageList: { flex: 1, overflowY: 'auto', padding: '1rem', background: 'var(--bg-message-list)' },
+  messageList: { flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '1rem', background: 'var(--bg-message-list)' },
   noMore: { textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 0.5rem' },
   loadingMore: { textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 0.5rem' },
   bottom: { flexShrink: 0, background: 'var(--bg-surface)', borderTop: '1px solid var(--border)', padding: '0 1rem' },

@@ -31,8 +31,16 @@ export function useWebSocket(token: string | null) {
         return
       }
 
-      const { addMessage, setTyping, setOnline, fetchRooms, fetchDmRooms, incrementUnread, activeRoomId } =
-        useChatStore.getState()
+      const {
+        addMessage,
+        setTyping,
+        setOnline,
+        fetchRooms,
+        fetchDmRooms,
+        incrementUnread,
+        activeRoomId,
+        updateReactions,
+      } = useChatStore.getState()
       const { fetchPendingRequests, fetchFriends, removeFriend } = useFriendStore.getState()
 
       if (payload.type === 'message.new') {
@@ -42,6 +50,7 @@ export function useWebSocket(token: string | null) {
           sender: payload.sender,
           content: payload.content,
           created_at: payload.created_at,
+          reactions: [], // 방금 도착한 메시지라 리액션이 있을 수 없음
         })
         // 지금 열어보고 있는 방이 아니면 안읽음 뱃지 +1.
         // 내가 보낸 메시지도 이 이벤트를 그대로 받긴 하지만, 메시지는 항상 activeRoomId로만
@@ -73,6 +82,11 @@ export function useWebSocket(token: string | null) {
         } else {
           fetchRooms()
         }
+      } else if (payload.type === 'reaction.update') {
+        // 내가 리액션을 눌렀을 때도 이 이벤트가 그대로 돌아옴(브로드캐스트에서 나를 제외하지 않음).
+        // 서버가 계산한 "해당 메시지의 이모지별 최신 상태" 전체로 덮어쓰기만 하면 되므로,
+        // 클라이언트에서 낙관적으로 먼저 반영해뒀다가 나중에 맞춰줄 필요가 없음
+        updateReactions(payload.room_id, payload.message_id, payload.reactions)
       }
     }
 
@@ -116,5 +130,9 @@ export function useWebSocket(token: string | null) {
     wsRef.current?.send(JSON.stringify({ type: 'read.update', room_id: roomId }))
   }, [])
 
-  return { sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate }
+  const sendReaction = useCallback((messageId: string, emoji: string) => {
+    wsRef.current?.send(JSON.stringify({ type: 'reaction.toggle', message_id: messageId, emoji }))
+  }, [])
+
+  return { sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate, sendReaction }
 }

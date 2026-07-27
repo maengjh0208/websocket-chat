@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useAuthStore } from '@/store/auth'
 import { useChatStore } from '@/store/chat'
 import { useWebSocket } from '@/hooks/useWebSocket'
@@ -12,9 +12,15 @@ export default function ChatLayout() {
   const token = useAuthStore((s) => s.token)
   const activeRoomId = useChatStore((s) => s.activeRoomId)
   const setActiveRoom = useChatStore((s) => s.setActiveRoom)
+  const fetchAllowedReactions = useChatStore((s) => s.fetchAllowedReactions)
   const isMobile = useIsMobile()
 
-  const { sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate } = useWebSocket(token)
+  const { sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate, sendReaction } = useWebSocket(token)
+
+  // 리액션 허용 목록은 방과 무관한 앱 전역 정적 데이터라, 방을 옮길 때마다가 아니라 로그인 세션당 한 번만 조회
+  useEffect(() => {
+    fetchAllowedReactions()
+  }, [fetchAllowedReactions])
 
   const handleSelectRoom = useCallback((roomId: string) => {
     setActiveRoom(roomId)
@@ -42,6 +48,11 @@ export default function ChatLayout() {
     if (activeRoomId) sendReadUpdate(activeRoomId)
   }, [activeRoomId, sendReadUpdate])
 
+  const handleReact = useCallback(
+    (messageId: string, emoji: string) => { sendReaction(messageId, emoji) },
+    [sendReaction],
+  )
+
   // 모바일에선 목록/채팅 화면을 동시에 두 개 다 보여줄 화면 폭이 없어서,
   // 항상 하나만 렌더링하고 activeRoomId 유무로 어느 쪽을 보여줄지 전환함
   // (PC는 기존처럼 사이드바+채팅창을 나란히 항상 같이 보여줌)
@@ -60,6 +71,7 @@ export default function ChatLayout() {
               onTypingStart={handleTypingStart}
               onTypingStop={handleTypingStop}
               onReadUpdate={handleReadUpdate}
+              onReact={handleReact}
               onBack={isMobile ? handleBack : undefined}
             />
           ) : (

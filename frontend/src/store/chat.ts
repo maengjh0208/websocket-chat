@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import apiClient from '@/api/client'
-import type { Room, DmRoom, Message, User } from '@/types'
+import type { Room, DmRoom, Message, User, ReactionSummary, AllowedReaction } from '@/types'
 
 interface TypingState {
   [roomId: string]: string[] // 현재 타이핑 중인 username 목록
@@ -19,6 +19,7 @@ interface ChatState {
   typing: TypingState
   online: OnlineState
   roomMembers: Record<string, User[]> // roomId → members
+  allowedReactions: string[] // 사용 가능한 리액션 이모지 (sort_order 순, 서버가 이미 정렬해서 내려줌)
 
   fetchRooms: () => Promise<void>
   fetchDmRooms: () => Promise<void>
@@ -27,12 +28,14 @@ interface ChatState {
   fetchMessages: (roomId: string) => Promise<void>
   fetchOlderMessages: (roomId: string) => Promise<void>
   fetchRoomMembers: (roomId: string) => Promise<void>
+  fetchAllowedReactions: () => Promise<void>
   leaveRoom: (roomId: string) => Promise<void>
 
   // WebSocket 이벤트 수신 시 호출
   addMessage: (message: Message) => void
   setTyping: (roomId: string, username: string, isTyping: boolean) => void
   setOnline: (userId: string, status: 'online' | 'offline') => void
+  updateReactions: (roomId: string, messageId: string, reactions: ReactionSummary[]) => void
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -44,6 +47,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   typing: {},
   online: {},
   roomMembers: {},
+  allowedReactions: [],
 
   fetchRooms: async () => {
     const { data } = await apiClient.get<Room[]>('/rooms')
@@ -101,6 +105,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }))
   },
 
+  fetchAllowedReactions: async () => {
+    const { data } = await apiClient.get<AllowedReaction[]>('/reactions/allowed')
+    set({ allowedReactions: data.map((r) => r.emoji) })
+  },
+
   addMessage: (message) => {
     set((state) => {
       const existing = state.messages[message.room_id] ?? []
@@ -127,6 +136,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set((state) => ({
       online: { ...state.online, [userId]: status === 'online' },
     }))
+  },
+
+  updateReactions: (roomId, messageId, reactions) => {
+    set((state) => {
+      const existing = state.messages[roomId]
+      if (!existing) return {}
+      return {
+        messages: {
+          ...state.messages,
+          [roomId]: existing.map((m) => (m.id === messageId ? { ...m, reactions } : m)),
+        },
+      }
+    })
   },
 
   leaveRoom: async (roomId) => {

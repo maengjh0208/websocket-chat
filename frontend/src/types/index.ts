@@ -17,6 +17,11 @@ export interface DmRoom extends Room {
   dm_partner: { id: string; username: string }
 }
 
+export interface ReactionSummary {
+  emoji: string
+  user_ids: string[] // count는 .length, 내가 반응했는지는 user_ids.includes(내 id)로 계산
+}
+
 export interface Message {
   id: string
   room_id: string
@@ -26,6 +31,12 @@ export interface Message {
   }
   content: string
   created_at: string
+  reactions: ReactionSummary[]
+}
+
+export interface AllowedReaction {
+  emoji: string
+  sort_order: number
 }
 
 // WebSocket 페이로드 타입들
@@ -76,6 +87,13 @@ export interface WSRoomInvite {
   is_dm: boolean
 }
 
+export interface WSReactionUpdate {
+  type: 'reaction.update'
+  message_id: string
+  room_id: string
+  reactions: ReactionSummary[]
+}
+
 export type WSPayload =
   | WSMessageNew
   | WSPresenceUpdate
@@ -84,6 +102,7 @@ export type WSPayload =
   | WSFriendAccept
   | WSFriendDelete
   | WSRoomInvite
+  | WSReactionUpdate
 
 export interface AuthTokens {
   access_token: string
