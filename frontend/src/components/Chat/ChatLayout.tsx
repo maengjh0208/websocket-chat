@@ -61,7 +61,7 @@ export default function ChatLayout() {
 
   return (
     <>
-      {connectionStatus === 'connecting' && (
+      {connectionStatus === 'reconnecting' && (
         <div style={styles.reconnectBanner}>연결이 끊겼습니다. 재연결 중...</div>
       )}
       <div style={styles.container}>

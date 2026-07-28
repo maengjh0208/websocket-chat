@@ -30,13 +30,18 @@ export function useWebSocket(token: string | null) {
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const pongTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const missedPongCountRef = useRef(0)
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting'>('connecting')
+  // 'connecting': 최초 접속 대기 중(배너 안 띄움) / 'connected': 연결됨 /
+  // 'reconnecting': 한 번이라도 연결에 성공한 적이 있는데 끊겨서 재연결 대기 중(이때만 배너 띄움)
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'reconnecting'>('connecting')
 
   useEffect(() => {
     if (!token) return
 
     // 언마운트/token 변경(로그아웃 등) 이후에는 예약된 재연결이 실행되면 안 되므로 플래그로 막는다.
     let cancelled = false
+    // 이번 로그인 세션에서 한 번이라도 연결에 성공한 적이 있는지 — 최초 접속 대기와
+    // 진짜 재연결(끊겼다가 다시 붙는 것)을 구분하기 위한 용도
+    let hasConnectedOnce = false
 
     const stopHeartbeat = () => {
       if (pingIntervalRef.current) clearInterval(pingIntervalRef.current)
@@ -77,6 +82,7 @@ export function useWebSocket(token: string | null) {
       ws.onopen = () => {
         console.log('[WS] 연결됨')
         setConnectionStatus('connected')
+        hasConnectedOnce = true
         startHeartbeat(ws)
 
         // retryCountRef가 0보다 크다는 건 최초 연결이 아니라 재연결이라는 뜻.
@@ -172,7 +178,10 @@ export function useWebSocket(token: string | null) {
         stopHeartbeat()
         if (cancelled) return
 
-        setConnectionStatus('connecting')
+        // 한 번도 연결에 성공한 적 없는 최초 접속 시도라면(예: 페이지를 열자마자 서버가
+        // 잠깐 안 떠 있는 경우) "재연결" 배너를 띄우지 않는다 — 끊긴 적이 없으니 배너 문구가
+        // 맞지 않기 때문. 이미 연결에 성공한 적이 있다면 진짜 재연결 상황이므로 배너를 띄운다.
+        if (hasConnectedOnce) setConnectionStatus('reconnecting')
         const delay = getBackoffDelay(retryCountRef.current)
         retryCountRef.current += 1
         console.log(`[WS] ${Math.round(delay)}ms 후 재연결 시도 (${retryCountRef.current}번째)`)
