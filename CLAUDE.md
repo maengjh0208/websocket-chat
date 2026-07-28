@@ -59,8 +59,11 @@ Task 3~16 모두 완료. 계획된 구현 끝.
 
 세 가지를 독립 작업으로 나눠서 순서대로 진행 중: 재연결 → Rate limiting → 부하 테스트.
 
-- [ ] **WebSocket 자동 재연결 (지수 백오프 + heartbeat)** — 진행 중
+- [x] **WebSocket 자동 재연결 (지수 백오프 + heartbeat)** — 코드 작업 완료, 최종 수동 통합 테스트만 미확인
   - 스펙: `docs/superpowers/specs/2026-07-28-ws-reconnect-design.md`
-  - 계획: `docs/superpowers/plans/2026-07-28-ws-reconnect.md` (인라인 실행 중)
-- [ ] **Rate limiting (slowapi)** — 예정, 재연결 완료 후 브레인스토밍 시작
+  - 계획: `docs/superpowers/plans/2026-07-28-ws-reconnect.md`
+  - Render 배포 테스트 중 발견된 후속 문제(멀티탭 연결 덮어쓰기, heartbeat 1회 실패 시 즉시 재연결, 재연결 시 안읽음 카운트 미복구)는 별도 스펙/계획으로 수정 완료:
+    - 스펙: `docs/superpowers/specs/2026-07-28-ws-connection-hardening-design.md`
+    - 계획: `docs/superpowers/plans/2026-07-28-ws-connection-hardening.md` (코드 작업 완료, 최종 수동 통합 테스트만 미확인)
+- [ ] **Rate limiting (slowapi)** — 브레인스토밍 진행 중
 - [ ] **Locust 부하 테스트** — 예정, rate limiting 완료 후 브레인스토밍 시작
