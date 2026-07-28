@@ -94,6 +94,10 @@ export interface WSReactionUpdate {
   reactions: ReactionSummary[]
 }
 
+export interface WSPong {
+  type: 'pong'
+}
+
 export type WSPayload =
   | WSMessageNew
   | WSPresenceUpdate
@@ -103,6 +107,7 @@ export type WSPayload =
   | WSFriendDelete
   | WSRoomInvite
   | WSReactionUpdate
+  | WSPong
 
 export interface AuthTokens {
   access_token: string
