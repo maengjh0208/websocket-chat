@@ -54,3 +54,13 @@ Task 3~16 모두 완료. 계획된 구현 끝.
 - 아키텍처: Router → Service → CRUD → Domain Entity 레이어
 - 인프라: Nginx + Redis Pub/Sub으로 다중 서버 WebSocket 지원
 - 상세 계획 문서: `docs/superpowers/plans/2026-07-11-advanced-features.md`
+
+### 성능/안정성 보강 (2026-07-28~)
+
+세 가지를 독립 작업으로 나눠서 순서대로 진행 중: 재연결 → Rate limiting → 부하 테스트.
+
+- [ ] **WebSocket 자동 재연결 (지수 백오프 + heartbeat)** — 진행 중
+  - 스펙: `docs/superpowers/specs/2026-07-28-ws-reconnect-design.md`
+  - 계획: `docs/superpowers/plans/2026-07-28-ws-reconnect.md` (인라인 실행 중)
+- [ ] **Rate limiting (slowapi)** — 예정, 재연결 완료 후 브레인스토밍 시작
+- [ ] **Locust 부하 테스트** — 예정, rate limiting 완료 후 브레인스토밍 시작
