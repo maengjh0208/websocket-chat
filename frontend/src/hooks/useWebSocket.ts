@@ -21,6 +21,7 @@ function getBackoffDelay(retryCount: number): number {
 // heartbeat — 30초마다 ping, 10초 안에 pong 없으면 죽은 연결로 간주
 const PING_INTERVAL_MS = 30 * 1000
 const PONG_TIMEOUT_MS = 10 * 1000
+const MAX_MISSED_PONGS = 2 // 연속으로 이 횟수만큼 pong을 못 받아야 죽은 연결로 판단
 
 export function useWebSocket(token: string | null) {
   const wsRef = useRef<WebSocket | null>(null)
@@ -28,6 +29,7 @@ export function useWebSocket(token: string | null) {
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const pongTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const missedPongCountRef = useRef(0)
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting'>('connecting')
 
   useEffect(() => {
@@ -44,15 +46,22 @@ export function useWebSocket(token: string | null) {
     }
 
     const startHeartbeat = (ws: WebSocket) => {
+      missedPongCountRef.current = 0 // 매 연결마다 새로 시작 (이전 연결의 실패 이력을 물려받지 않음)
       pingIntervalRef.current = setInterval(() => {
         if (ws.readyState !== WebSocket.OPEN) return
         ws.send(JSON.stringify({ type: 'ping' }))
-        // pong이 10초 안에 안 오면 소켓이 사실상 죽은 것으로 간주하고 강제로 닫는다.
+        // pong이 10초 안에 안 오더라도 바로 죽었다고 판단하지 않는다. 프로덕션 네트워크에서는
+        // 어쩌다 한 번 프레임이 늦는 경우가 있을 수 있어서, 연속으로 MAX_MISSED_PONGS번
+        // 실패해야만 소켓이 사실상 죽은 것으로 간주하고 강제로 닫는다.
         // ws.close()를 호출하면 브라우저가 onclose를 발생시키므로 재연결 스케줄링은
         // 아래 onclose 핸들러가 그대로 처리한다 (재연결 로직 중복 작성 불필요)
         pongTimeoutRef.current = setTimeout(() => {
-          console.warn('[WS] pong 타임아웃 — 연결을 강제로 닫고 재연결합니다')
-          ws.close()
+          missedPongCountRef.current += 1
+          console.warn(`[WS] pong 타임아웃 (연속 ${missedPongCountRef.current}/${MAX_MISSED_PONGS})`)
+          if (missedPongCountRef.current >= MAX_MISSED_PONGS) {
+            console.warn('[WS] 연속 pong 누락 — 연결을 강제로 닫고 재연결합니다')
+            ws.close()
+          }
         }, PONG_TIMEOUT_MS)
       }, PING_INTERVAL_MS)
     }
@@ -92,6 +101,7 @@ export function useWebSocket(token: string | null) {
         }
 
         if (payload.type === 'pong') {
+          missedPongCountRef.current = 0
           if (pongTimeoutRef.current) clearTimeout(pongTimeoutRef.current)
           return
         }
