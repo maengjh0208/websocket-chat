@@ -18,16 +18,43 @@ function getBackoffDelay(retryCount: number): number {
   return raw * jitter
 }
 
+// heartbeat — 30초마다 ping, 10초 안에 pong 없으면 죽은 연결로 간주
+const PING_INTERVAL_MS = 30 * 1000
+const PONG_TIMEOUT_MS = 10 * 1000
+
 export function useWebSocket(token: string | null) {
   const wsRef = useRef<WebSocket | null>(null)
   const retryCountRef = useRef(0)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pongTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!token) return
 
     // 언마운트/token 변경(로그아웃 등) 이후에는 예약된 재연결이 실행되면 안 되므로 플래그로 막는다.
     let cancelled = false
+
+    const stopHeartbeat = () => {
+      if (pingIntervalRef.current) clearInterval(pingIntervalRef.current)
+      if (pongTimeoutRef.current) clearTimeout(pongTimeoutRef.current)
+      pingIntervalRef.current = null
+      pongTimeoutRef.current = null
+    }
+
+    const startHeartbeat = (ws: WebSocket) => {
+      pingIntervalRef.current = setInterval(() => {
+        if (ws.readyState !== WebSocket.OPEN) return
+        ws.send(JSON.stringify({ type: 'ping' }))
+        // pong이 10초 안에 안 오면 소켓이 사실상 죽은 것으로 간주하고 강제로 닫는다.
+        // ws.close()를 호출하면 브라우저가 onclose를 발생시키므로 재연결 스케줄링은
+        // 아래 onclose 핸들러가 그대로 처리한다 (재연결 로직 중복 작성 불필요)
+        pongTimeoutRef.current = setTimeout(() => {
+          console.warn('[WS] pong 타임아웃 — 연결을 강제로 닫고 재연결합니다')
+          ws.close()
+        }, PONG_TIMEOUT_MS)
+      }, PING_INTERVAL_MS)
+    }
 
     const connect = () => {
       if (cancelled) return
@@ -39,6 +66,7 @@ export function useWebSocket(token: string | null) {
 
       ws.onopen = () => {
         console.log('[WS] 연결됨')
+        startHeartbeat(ws)
         retryCountRef.current = 0
       }
 
@@ -50,6 +78,11 @@ export function useWebSocket(token: string | null) {
         try {
           payload = JSON.parse(event.data) as WSPayload
         } catch {
+          return
+        }
+
+        if (payload.type === 'pong') {
+          if (pongTimeoutRef.current) clearTimeout(pongTimeoutRef.current)
           return
         }
 
@@ -114,6 +147,7 @@ export function useWebSocket(token: string | null) {
 
       ws.onclose = () => {
         console.log('[WS] 연결 종료')
+        stopHeartbeat()
         if (cancelled) return
 
         const delay = getBackoffDelay(retryCountRef.current)
@@ -133,6 +167,7 @@ export function useWebSocket(token: string | null) {
     // 정리하지 않으면 로그아웃 후에도 백그라운드에서 재연결 시도가 계속 발생할 수 있다.
     return () => {
       cancelled = true
+      stopHeartbeat()
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
       wsRef.current?.close()
     }
