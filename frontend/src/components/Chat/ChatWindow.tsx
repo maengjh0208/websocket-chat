@@ -84,8 +84,16 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
       setHasNewMessage(true)
     }
   }, [messages])
-  // 타이핑 인디케이터가 뜨고 사라지는 것만으로는 더 이상 스크롤하지 않음
-  // (옛날 메시지를 읽던 중에 누가 타이핑을 시작했다고 화면이 끌려 내려가면 안 되므로)
+
+  useEffect(() => {
+    // 메시지와 별개 규칙: 타이핑 인디케이터는 "새 메시지 배너"를 띄우지 않는다(너무 자주 뜨고 사라져서
+    // 배너로 알릴 만큼 중요한 이벤트가 아님). 대신 이미 맨 아래를 보고 있던 경우에만 그대로 따라가서
+    // 인디케이터를 화면에 보여주고, 옛날 메시지를 읽던 중이었다면 화면을 건드리지 않는다.
+    if (skipScrollRef.current || !isAtBottomRef.current) return
+    if (typing.length > 0) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [typing])
 
   const handleScroll = async () => {
     const el = listRef.current
