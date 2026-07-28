@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { useChatStore } from '@/store/chat'
 import { useFriendStore } from '@/store/friend'
 import type { WSPayload } from '@/types'
@@ -28,6 +28,7 @@ export function useWebSocket(token: string | null) {
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const pongTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting'>('connecting')
 
   useEffect(() => {
     if (!token) return
@@ -66,7 +67,16 @@ export function useWebSocket(token: string | null) {
 
       ws.onopen = () => {
         console.log('[WS] 연결됨')
+        setConnectionStatus('connected')
         startHeartbeat(ws)
+
+        // retryCountRef가 0보다 크다는 건 최초 연결이 아니라 재연결이라는 뜻.
+        // 끊긴 동안 서버가 놓친 이벤트를 재전송해주지 않으므로, 현재 보고 있는 방의
+        // 메시지를 REST로 다시 조회해서 최신 상태로 맞춘다.
+        if (retryCountRef.current > 0) {
+          const { activeRoomId, fetchMessages } = useChatStore.getState()
+          if (activeRoomId) fetchMessages(activeRoomId)
+        }
         retryCountRef.current = 0
       }
 
@@ -150,6 +160,7 @@ export function useWebSocket(token: string | null) {
         stopHeartbeat()
         if (cancelled) return
 
+        setConnectionStatus('connecting')
         const delay = getBackoffDelay(retryCountRef.current)
         retryCountRef.current += 1
         console.log(`[WS] ${Math.round(delay)}ms 후 재연결 시도 (${retryCountRef.current}번째)`)
@@ -194,5 +205,5 @@ export function useWebSocket(token: string | null) {
     wsRef.current?.send(JSON.stringify({ type: 'reaction.toggle', message_id: messageId, emoji }))
   }, [])
 
-  return { sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate, sendReaction }
+  return { sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate, sendReaction, connectionStatus }
 }
