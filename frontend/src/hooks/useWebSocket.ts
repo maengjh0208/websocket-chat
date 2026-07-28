@@ -83,8 +83,10 @@ export function useWebSocket(token: string | null) {
         // 끊긴 동안 서버가 놓친 이벤트를 재전송해주지 않으므로, 현재 보고 있는 방의
         // 메시지를 REST로 다시 조회해서 최신 상태로 맞춘다.
         if (retryCountRef.current > 0) {
-          const { activeRoomId, fetchMessages } = useChatStore.getState()
+          const { activeRoomId, fetchMessages, fetchRooms, fetchDmRooms } = useChatStore.getState()
           if (activeRoomId) fetchMessages(activeRoomId)
+          fetchRooms()
+          fetchDmRooms()
         }
         retryCountRef.current = 0
       }
