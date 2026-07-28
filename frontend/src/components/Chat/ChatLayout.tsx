@@ -15,7 +15,7 @@ export default function ChatLayout() {
   const fetchAllowedReactions = useChatStore((s) => s.fetchAllowedReactions)
   const isMobile = useIsMobile()
 
-  const { sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate, sendReaction } = useWebSocket(token)
+  const { sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate, sendReaction, connectionStatus } = useWebSocket(token)
 
   // 리액션 허용 목록은 방과 무관한 앱 전역 정적 데이터라, 방을 옮길 때마다가 아니라 로그인 세션당 한 번만 조회
   useEffect(() => {
@@ -60,30 +60,35 @@ export default function ChatLayout() {
   const showMain = !isMobile || !!activeRoomId
 
   return (
-    <div style={styles.container}>
-      {showSidebar && <Sidebar onSelectRoom={handleSelectRoom} activeRoomId={activeRoomId} isMobile={isMobile} />}
-      {showMain && (
-        <div style={styles.main}>
-          {activeRoomId ? (
-            <ChatWindow
-              roomId={activeRoomId}
-              onSendMessage={handleSendMessage}
-              onTypingStart={handleTypingStart}
-              onTypingStop={handleTypingStop}
-              onReadUpdate={handleReadUpdate}
-              onReact={handleReact}
-              onBack={isMobile ? handleBack : undefined}
-            />
-          ) : (
-            <div style={styles.placeholder}>
-              <div style={styles.placeholderMark} />
-              <p style={styles.placeholderTitle}>대화를 시작해보세요</p>
-              <p style={styles.placeholderSub}>왼쪽에서 채팅방을 선택하거나 새 방을 만드세요.</p>
-            </div>
-          )}
-        </div>
+    <>
+      {connectionStatus === 'connecting' && (
+        <div style={styles.reconnectBanner}>연결이 끊겼습니다. 재연결 중...</div>
       )}
-    </div>
+      <div style={styles.container}>
+        {showSidebar && <Sidebar onSelectRoom={handleSelectRoom} activeRoomId={activeRoomId} isMobile={isMobile} />}
+        {showMain && (
+          <div style={styles.main}>
+            {activeRoomId ? (
+              <ChatWindow
+                roomId={activeRoomId}
+                onSendMessage={handleSendMessage}
+                onTypingStart={handleTypingStart}
+                onTypingStop={handleTypingStop}
+                onReadUpdate={handleReadUpdate}
+                onReact={handleReact}
+                onBack={isMobile ? handleBack : undefined}
+              />
+            ) : (
+              <div style={styles.placeholder}>
+                <div style={styles.placeholderMark} />
+                <p style={styles.placeholderTitle}>대화를 시작해보세요</p>
+                <p style={styles.placeholderSub}>왼쪽에서 채팅방을 선택하거나 새 방을 만드세요.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </>
   )
 }
 
@@ -100,4 +105,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   placeholderTitle: { fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 },
   placeholderSub: { fontSize: '0.875rem', color: 'var(--text-muted)', margin: 0 },
+  reconnectBanner: {
+    position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)', zIndex: 100,
+    marginTop: '0.5rem', padding: '0.4rem 1rem', borderRadius: 8,
+    background: '#f59e0b', color: '#fff', fontSize: '0.8rem', fontWeight: 600,
+    boxShadow: 'var(--shadow-modal)',
+  },
 }
