@@ -27,7 +27,7 @@
 
 현재 프론트는 서버가 보내는 `{"type": "pong"}` 응답을 아예 타입으로 정의하지 않고 있다(현재 `onmessage`도 이 타입을 처리하지 않음 — Task 4에서 처리 추가). 먼저 타입만 추가한다.
 
-- [ ] **Step 1: `WSPong` 인터페이스 추가**
+- [x] **Step 1: `WSPong` 인터페이스 추가**
 
 `frontend/src/types/index.ts`의 `WSReactionUpdate` 정의(라인 90-95) 바로 아래에 추가:
 
@@ -37,7 +37,7 @@ export interface WSPong {
 }
 ```
 
-- [ ] **Step 2: `WSPayload` 유니온에 포함**
+- [x] **Step 2: `WSPayload` 유니온에 포함**
 
 ```ts
 export type WSPayload =
@@ -52,12 +52,12 @@ export type WSPayload =
   | WSPong
 ```
 
-- [ ] **Step 3: 타입 체크로 검증**
+- [x] **Step 3: 타입 체크로 검증**
 
 Run: `cd frontend && npx tsc --noEmit`
 Expected: 에러 없음 (아직 `pong`을 쓰는 곳이 없으므로 unused 경고도 없음)
 
-- [ ] **Step 4: 커밋**
+- [x] **Step 4: 커밋**
 
 ```bash
 git add frontend/src/types/index.ts
