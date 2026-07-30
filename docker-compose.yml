@@ -10,7 +10,9 @@ services:
 
   backend:
     build: ./backend
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./backend:/app
     # ports 제거 - nginx가 대신 받음 (backend는 외부에 직접 노출시키지 않고, docker 내부 네트워크에서 8000포트로 실행)
