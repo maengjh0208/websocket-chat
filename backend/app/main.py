@@ -34,19 +34,11 @@ async def lifespan(app: FastAPI):
 if settings.SENTRY_DSN:
     sentry_sdk.init(
         dsn=settings.SENTRY_DSN,
-        # Add data like request headers and IP for users,
-        # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+        environment=settings.ENV,
         send_default_pii=True,
-        # Enable sending logs to Sentry
         enable_logs=True,
-        # Set traces_sample_rate to 1.0 to capture 100%
-        # of transactions for tracing.
         traces_sample_rate=1.0,
-        # Set profile_session_sample_rate to 1.0 to profile 100%
-        # of profile sessions.
         profile_session_sample_rate=1.0,
-        # Set profile_lifecycle to "trace" to automatically
-        # run the profiler on when there is an active transaction
         profile_lifecycle="trace",
     )
 
@@ -54,14 +46,15 @@ app = FastAPI(title="WebSocket Chat", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[  # 이 출처에서 온 요청만 허용
+    allow_origins=[
         "http://localhost:5173",
         "https://websocket-chat-gb8w.onrender.com",
     ],
     allow_credentials=True,  # 쿠키/Authorization 헤더 허용
-    allow_methods=["*"],  # GET, POST, PUT, DELETE 등 모두 허용
+    allow_methods=["*"],
     allow_headers=["*"],  # 모든 요청 헤더 허용 (Authorization 포함)
 )
+
 
 register_exception_handlers(app)
 

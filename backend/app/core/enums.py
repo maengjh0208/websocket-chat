@@ -1,6 +1,11 @@
 from enum import IntEnum, StrEnum
 
 
+class Environment(StrEnum):
+    LOCAL = "local"
+    PROD = "prod"
+
+
 class WSCloseCode(IntEnum):
     UNAUTHORIZED = 4001  # jwt 토큰 만료
 

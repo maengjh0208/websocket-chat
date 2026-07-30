@@ -50,14 +50,12 @@ async def client(db):
     app.dependency_overrides.clear()
 
 
-# autouse=True: 모든 테스트에 자동 적용
-@pytest_asyncio.fixture(autouse=True)
-# monkeypatch: pytest가 기본 제공하는 fixture
-async def override_redis(monkeypatch):
-    # 테스트 전용 redis client 생성 (localhost로 접속)
-    test_redis_client = aioredis.from_url(url=settings.TEST_REDIS_URL, decode_responses=True)
+@pytest_asyncio.fixture(autouse=True)  # autouse=True: 모든 테스트에 자동 적용
+async def redis(monkeypatch):  # monkeypatch: pytest가 기본 제공하는 fixture
+    test_redis_client = aioredis.from_url(url=settings.REDIS_URL, decode_responses=True)
+    await test_redis_client.flushdb()  # 매 테스트 시작 전 Redis 전체 비우기
 
-    # monkeypatch.setattr("경로.이름", 값): 문자여로 된 경로를 보고 그 자리의 변수를 바꿔침.
+    # monkeypatch.setattr("경로.이름", 값): 문자로 된 경로를 보고 그 자리의 변수를 바꿔침.
     monkeypatch.setattr("app.core.redis.redis_client", test_redis_client)
     monkeypatch.setattr("app.managers.pubsub.redis_client", test_redis_client)
     monkeypatch.setattr("app.managers.presence.redis_client", test_redis_client)
