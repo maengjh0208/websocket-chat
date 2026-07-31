@@ -15,12 +15,24 @@ export default function ChatLayout() {
   const fetchAllowedReactions = useChatStore((s) => s.fetchAllowedReactions)
   const isMobile = useIsMobile()
 
-  const { sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate, sendReaction, connectionStatus } = useWebSocket(token)
+  const {
+    sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate, sendReaction,
+    connectionStatus, wsErrorMessage, clearWsErrorMessage,
+  } = useWebSocket(token)
 
   // 리액션 허용 목록은 방과 무관한 앱 전역 정적 데이터라, 방을 옮길 때마다가 아니라 로그인 세션당 한 번만 조회
   useEffect(() => {
     fetchAllowedReactions()
   }, [fetchAllowedReactions])
+
+  // wsErrorMessage가 새로 생기면 3초 뒤 자동으로 지운다 (토스트 자동 소멸).
+  // 짧은 간격으로 에러가 연달아 오면 매번 타이머가 새로 시작되어(클린업이 이전 타이머를 정리)
+  // 항상 마지막 메시지 기준 3초를 보장한다.
+  useEffect(() => {
+    if (!wsErrorMessage) return
+    const timer = setTimeout(() => clearWsErrorMessage(), 3000)
+    return () => clearTimeout(timer)
+  }, [wsErrorMessage, clearWsErrorMessage])
 
   const handleSelectRoom = useCallback((roomId: string) => {
     setActiveRoom(roomId)
@@ -63,6 +75,9 @@ export default function ChatLayout() {
     <>
       {connectionStatus === 'reconnecting' && (
         <div style={styles.reconnectBanner}>연결이 끊겼습니다. 재연결 중...</div>
+      )}
+      {wsErrorMessage && (
+        <div style={styles.wsErrorToast}>{wsErrorMessage}</div>
       )}
       <div style={styles.container}>
         {showSidebar && <Sidebar onSelectRoom={handleSelectRoom} activeRoomId={activeRoomId} isMobile={isMobile} />}
@@ -109,6 +124,12 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)', zIndex: 100,
     marginTop: '0.5rem', padding: '0.4rem 1rem', borderRadius: 8,
     background: '#f59e0b', color: '#fff', fontSize: '0.8rem', fontWeight: 600,
+    boxShadow: 'var(--shadow-modal)',
+  },
+  wsErrorToast: {
+    position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 100,
+    padding: '0.5rem 1rem', borderRadius: 8,
+    background: '#ef4444', color: '#fff', fontSize: '0.8rem', fontWeight: 600,
     boxShadow: 'var(--shadow-modal)',
   },
 }

@@ -33,6 +33,9 @@ export function useWebSocket(token: string | null) {
   // 'connecting': 최초 접속 대기 중(배너 안 띄움) / 'connected': 연결됨 /
   // 'reconnecting': 한 번이라도 연결에 성공한 적이 있는데 끊겨서 재연결 대기 중(이때만 배너 띄움)
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'reconnecting'>('connecting')
+  // message.send가 rate limit에 걸렸을 때 서버가 보내는 에러 안내 문구.
+  // null이면 표시할 에러 없음. UI(ChatLayout)에서 몇 초 후 자동으로 clearWsErrorMessage()를 불러 지운다.
+  const [wsErrorMessage, setWsErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (!token) return
@@ -111,6 +114,11 @@ export function useWebSocket(token: string | null) {
         if (payload.type === 'pong') {
           missedPongCountRef.current = 0
           if (pongTimeoutRef.current) clearTimeout(pongTimeoutRef.current)
+          return
+        }
+
+        if (payload.type === 'error') {
+          setWsErrorMessage(payload.detail)
           return
         }
 
@@ -226,5 +234,9 @@ export function useWebSocket(token: string | null) {
     wsRef.current?.send(JSON.stringify({ type: 'reaction.toggle', message_id: messageId, emoji }))
   }, [])
 
-  return { sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate, sendReaction, connectionStatus }
+  return {
+    sendMessage, sendTypingStart, sendTypingStop, sendReadUpdate, sendReaction,
+    connectionStatus, wsErrorMessage,
+    clearWsErrorMessage: () => setWsErrorMessage(null),
+  }
 }

@@ -98,6 +98,12 @@ export interface WSPong {
   type: 'pong'
 }
 
+export interface WSError {
+  type: 'error'
+  error_code: string
+  detail: string
+}
+
 export type WSPayload =
   | WSMessageNew
   | WSPresenceUpdate
@@ -108,6 +114,7 @@ export type WSPayload =
   | WSRoomInvite
   | WSReactionUpdate
   | WSPong
+  | WSError
 
 export interface AuthTokens {
   access_token: string
