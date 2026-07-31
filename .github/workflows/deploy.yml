@@ -19,13 +19,13 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: maengjh
+          POSTGRES_PASSWORD: Aa123456!
           POSTGRES_DB: test_chat
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres"
+          --health-cmd "pg_isready -U maengjh -d test_chat"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
@@ -39,11 +39,15 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_chat
-      TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_chat
-      REDIS_URL: redis://localhost:6379
-      TEST_REDIS_URL: redis://localhost:6379
-      SECRET_KEY: test-secret-key
+      ENV: test
+      DB_USER: maengjh
+      DB_PASSWORD: Aa123456!
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: chat
+      TEST_DB_NAME: test_chat
+      REDIS_BASE_URL: redis://localhost:6379
+      SECRET_KEY: hello-friend
       ACCESS_TOKEN_EXPIRE_DAYS: 7
     steps:
       - uses: actions/checkout@v4
