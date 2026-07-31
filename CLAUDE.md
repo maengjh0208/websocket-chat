@@ -65,5 +65,8 @@ Task 3~16 모두 완료. 계획된 구현 끝.
   - Render 배포 테스트 중 발견된 후속 문제(멀티탭 연결 덮어쓰기, heartbeat 1회 실패 시 즉시 재연결, 재연결 시 안읽음 카운트 미복구)는 별도 스펙/계획으로 수정 완료:
     - 스펙: `docs/superpowers/specs/2026-07-28-ws-connection-hardening-design.md`
     - 계획: `docs/superpowers/plans/2026-07-28-ws-connection-hardening.md` (코드 작업 완료, 최종 수동 통합 테스트만 미확인)
-- [ ] **Rate limiting (slowapi)** — 브레인스토밍 진행 중
+- [x] **Rate limiting (slowapi)** — 코드 작업 완료 (REST 전역 60/min, 로그인·회원가입 10/min, WS message.send 10/10초), 자동화 테스트 통과, 멀티 서버 시나리오 검증 완료. 최종 수동 브라우저 테스트만 미확인
+  - 스펙: `docs/superpowers/specs/2026-07-29-rate-limiting-design.md`
+  - 계획: `docs/superpowers/plans/2026-07-29-rate-limiting.md`
+  - **알려진 이슈 (범위 밖, 후속 작업 필요)**: `nginx.conf`의 `upstream backend { server backend:8000; }`는 nginx가 시작될 때 `backend` 호스트명을 DNS로 딱 한 번만 해석해서 캐싱한다. `docker compose up --scale backend=2`로 인스턴스를 늘려도, nginx는 최초에 잡은 인스턴스 하나로만 계속 요청을 보내서 **실제로는 로드밸런싱이 안 되고 있음** (Rate limiting 멀티 서버 검증 중 발견 — 이번엔 nginx를 우회해서 두 backend 컨테이너에 직접 요청을 보내 Redis 카운터 공유 자체는 검증 완료했음). 고치려면 `resolver 127.0.0.11 valid=10s;` + 변수 기반 `proxy_pass`로 매 요청마다 DNS를 재해석하게 만들어야 함. 재연결/멀티탭 작업 때도 이 부분은 검증 범위에 없었던 것으로 보임.
 - [ ] **Locust 부하 테스트** — 예정, rate limiting 완료 후 브레인스토밍 시작
