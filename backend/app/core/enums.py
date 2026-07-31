@@ -40,6 +40,8 @@ class WSMessageType(StrEnum):
 
     ROOM_INVITE = "room.invite"
 
+    ERROR = "error"
+
 
 class FriendStatus(StrEnum):
     PENDING = "pending"

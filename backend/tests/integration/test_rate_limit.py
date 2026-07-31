@@ -2,6 +2,8 @@ from fastapi import status
 import pytest
 
 from app.core.exceptions import ErrorCode
+from app.core.limiter import ws_message_limiter, MESSAGE_SEND_LIMIT
+from app.core.enums import WSMessageType
 from tests.integration.helpers import auth_headers
 
 
@@ -74,3 +76,15 @@ async def test_default_rate_limit_is_isolated_per_user(client):
     # 유저B는 유저A와 별개로 카운터를 가져야 하므로, 정상 응답이어야 함.
     response = await client.get("/users/me", headers=header_b)
     assert response.status_code == status.HTTP_200_OK
+
+
+################################################################################################
+# websocket rate limit 테스트
+################################################################################################
+def test_message_send_limit_blocks_after_threshold():
+    user_id = "00000000-0000-0000-0000-000000000001"
+
+    for _ in range(10):
+        assert ws_message_limiter.hit(MESSAGE_SEND_LIMIT, WSMessageType.MESSAGE_SEND, str(user_id)) is True
+
+    assert ws_message_limiter.hit(MESSAGE_SEND_LIMIT, WSMessageType.MESSAGE_SEND, str(user_id)) is False

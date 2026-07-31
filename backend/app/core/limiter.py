@@ -2,6 +2,9 @@ from fastapi import Request
 from jose import JWTError
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from limits import parse
+from limits.storage import storage_from_string
+from limits.strategies import FixedWindowRateLimiter
 
 from app.core.security import decode_token
 from app.core.config import settings
@@ -28,3 +31,9 @@ limiter = Limiter(
     default_limits=["60/minute"],
     storage_uri=settings.REDIS_URL,
 )
+
+# slowapi는 아직 WebSocket을 지원하지 않음.
+# slowapi가 내부적으로 쓰는 것과 같은 'limit' 라이브러리를 직접 사용.
+_ws_storage = storage_from_string(settings.REDIS_URL)
+ws_message_limiter = FixedWindowRateLimiter(_ws_storage)
+MESSAGE_SEND_LIMIT = parse("10/10 seconds")

@@ -16,6 +16,8 @@ from app.core.enums import PresenceStatus, WSCloseCode, WSMessageType
 from app.managers import pubsub
 from app.core.exceptions import AppError
 from app.services import reaction as reaction_service
+from app.core.limiter import ws_message_limiter, MESSAGE_SEND_LIMIT
+from app.core.exceptions import ErrorCode
 
 router = APIRouter()
 
@@ -96,6 +98,17 @@ async def websocket_endpoint(
                 msg_type = payload.get("type")
 
                 if msg_type == WSMessageType.MESSAGE_SEND:
+                    if not ws_message_limiter.hit(MESSAGE_SEND_LIMIT, WSMessageType.MESSAGE_SEND, str(user.id)):
+                        await manager.send_to_user(
+                            user.id,
+                            {
+                                "type": WSMessageType.ERROR,
+                                "error_code": ErrorCode.RATE_LIMIT_EXCEEDED,
+                                "detail": "요청이 너무 많습니다",
+                            },
+                        )
+                        continue
+
                     room_id = UUID(payload["room_id"])
                     content = str(payload.get("content", "")).strip()
                     if not content:
