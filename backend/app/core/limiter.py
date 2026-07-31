@@ -16,7 +16,7 @@ def rate_limit_key(request: Request) -> str:
 
         try:
             user_id = decode_token(token)
-            return "user:{user_id}"
+            return f"user:{user_id}"
         except JWTError:
             pass
 
@@ -28,5 +28,3 @@ limiter = Limiter(
     default_limits=["60/minute"],
     storage_uri=settings.REDIS_URL,
 )
-
-

@@ -4,6 +4,7 @@ from enum import IntEnum, StrEnum
 class Environment(StrEnum):
     LOCAL = "local"
     PROD = "prod"
+    TEST = "test"
 
 
 class WSCloseCode(IntEnum):

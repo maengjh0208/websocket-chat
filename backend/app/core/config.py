@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     DB_SSL_MODE: str | None = None
     TEST_DB_NAME: str | None = None  # 로컬에서 테스트용 DB만 이름이 다르고, 나머지 연결 정보는 동일
     # Redis
-    REDIS_URL: str
+    REDIS_BASE_URL: str
     # JWT 서명용
     SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_DAYS: int
@@ -40,6 +40,14 @@ class Settings(BaseSettings):
     @property
     def TEST_DATABASE_URL(self) -> str | None:
         return self._build_db_url(self.TEST_DB_NAME) if self.TEST_DB_NAME else None
+
+    @property
+    def REDIS_URL(self) -> str:
+        redis_url = self.REDIS_BASE_URL
+        if self.ENV == Environment.TEST:
+            redis_url += "/1"
+
+        return redis_url
 
 
 settings = Settings()

@@ -9,7 +9,7 @@ backend-test-init-db:
 
 # 전체 통합 테스트 실행 (로컬에서 직접)
 backend-test:
-	docker compose exec backend pytest . -v
+	docker compose exec -e ENV=test backend pytest . -v
 
 
 ######################################## backend DB 마이그레이션 ########################################
