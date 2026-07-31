@@ -104,7 +104,7 @@ async def websocket_endpoint(
                             {
                                 "type": WSMessageType.ERROR,
                                 "error_code": ErrorCode.RATE_LIMIT_EXCEEDED,
-                                "detail": "요청이 너무 많습니다",
+                                "detail": "메시지를 너무 빠르게 보내고 있어요. 잠시 후 다시 시도해 주세요.",
                             },
                         )
                         continue
