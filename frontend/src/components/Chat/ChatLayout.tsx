@@ -76,9 +76,6 @@ export default function ChatLayout() {
       {connectionStatus === 'reconnecting' && (
         <div style={styles.reconnectBanner}>연결이 끊겼습니다. 재연결 중...</div>
       )}
-      {wsErrorMessage && (
-        <div style={styles.wsErrorToast}>{wsErrorMessage}</div>
-      )}
       <div style={styles.container}>
         {showSidebar && <Sidebar onSelectRoom={handleSelectRoom} activeRoomId={activeRoomId} isMobile={isMobile} />}
         {showMain && (
@@ -92,6 +89,7 @@ export default function ChatLayout() {
                 onReadUpdate={handleReadUpdate}
                 onReact={handleReact}
                 onBack={isMobile ? handleBack : undefined}
+                wsErrorMessage={wsErrorMessage}
               />
             ) : (
               <div style={styles.placeholder}>
@@ -124,12 +122,6 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)', zIndex: 100,
     marginTop: '0.5rem', padding: '0.4rem 1rem', borderRadius: 8,
     background: '#f59e0b', color: '#fff', fontSize: '0.8rem', fontWeight: 600,
-    boxShadow: 'var(--shadow-modal)',
-  },
-  wsErrorToast: {
-    position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 100,
-    padding: '0.5rem 1rem', borderRadius: 8,
-    background: '#ef4444', color: '#fff', fontSize: '0.8rem', fontWeight: 600,
     boxShadow: 'var(--shadow-modal)',
   },
 }

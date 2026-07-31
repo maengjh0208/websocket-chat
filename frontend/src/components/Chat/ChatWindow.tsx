@@ -16,13 +16,14 @@ interface Props {
   onReadUpdate: () => void
   onReact: (messageId: string, emoji: string) => void
   onBack?: () => void // 모바일에서만 전달됨 — 목록 화면으로 돌아가는 뒤로가기 버튼용
+  wsErrorMessage?: string | null // message.send가 rate limit에 걸렸을 때 서버가 보낸 안내 문구
 }
 
 // WebSocket 연결 포인트:
 // - 방에 입장할 때 read.update push → 서버가 last_read_at 업데이트
 // - 새 message.new가 수신되면 addMessage(store)를 통해 자동으로 목록에 추가됨
 // - 리액션 pill 클릭 시 onReact → reaction.toggle push, 갱신된 상태는 reaction.update로 돌아와 store가 반영
-export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTypingStop, onReadUpdate, onReact, onBack }: Props) {
+export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTypingStop, onReadUpdate, onReact, onBack, wsErrorMessage }: Props) {
   const messages = useChatStore((s) => s.messages[roomId] ?? [])
   const typing = useChatStore((s) => s.typing[roomId] ?? [])
   const hasMore = useChatStore((s) => s.hasMoreMessages[roomId] ?? true)
@@ -180,6 +181,9 @@ export default function ChatWindow({ roomId, onSendMessage, onTypingStart, onTyp
             ↓ 새 메시지가 있습니다
           </button>
         )}
+        {wsErrorMessage && (
+          <div style={styles.wsErrorToast}>{wsErrorMessage}</div>
+        )}
       </div>
 
       <div style={styles.bottom}>
@@ -251,6 +255,13 @@ const styles: Record<string, React.CSSProperties> = {
     background: '#4f46e5', color: '#fff', border: 'none',
     fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
     boxShadow: 'var(--shadow-modal)', zIndex: 10,
+  },
+  wsErrorToast: {
+    position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)',
+    padding: '0.45rem 0.9rem', borderRadius: 20,
+    background: '#ef4444', color: '#fff',
+    fontSize: '0.8rem', fontWeight: 600,
+    boxShadow: 'var(--shadow-modal)', zIndex: 10, whiteSpace: 'nowrap',
   },
   noMore: { textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 0.5rem' },
   loadingMore: { textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 0.5rem' },
