@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { AxiosError } from 'axios'
 import { useAuthStore } from '@/store/auth'
 
 interface Props {
@@ -18,8 +19,12 @@ export default function LoginForm({ onSwitchToRegister }: Props) {
     setLoading(true)
     try {
       await login(email, password)
-    } catch {
-      setError('이메일 또는 비밀번호가 올바르지 않습니다.')
+    } catch (err) {
+      // 백엔드 에러 응답은 항상 {detail: "..."} 형태라, 401(비밀번호 틀림)이든
+      // 429(rate limit)든 서버가 보낸 문구를 그대로 보여준다. 응답 자체가 없으면
+      // (네트워크 끊김 등) 응답 본문이 없으므로 이때만 일반적인 문구로 대체.
+      const detail = err instanceof AxiosError ? (err.response?.data as { detail?: string } | undefined)?.detail : undefined
+      setError(detail ?? '이메일 또는 비밀번호가 올바르지 않습니다.')
     } finally {
       setLoading(false)
     }

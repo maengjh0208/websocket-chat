@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { AxiosError } from 'axios'
 import { useAuthStore } from '@/store/auth'
 
 interface Props {
@@ -21,8 +22,11 @@ export default function RegisterForm({ onSwitchToLogin }: Props) {
     try {
       await register(username, email, password)
       setDone(true)
-    } catch {
-      setError('회원가입에 실패했습니다. 이미 사용 중인 이메일일 수 있습니다.')
+    } catch (err) {
+      // 백엔드 에러 응답은 항상 {detail: "..."} 형태라, 400(이메일 중복)이든
+      // 429(rate limit)든 서버가 보낸 문구를 그대로 보여준다.
+      const detail = err instanceof AxiosError ? (err.response?.data as { detail?: string } | undefined)?.detail : undefined
+      setError(detail ?? '회원가입에 실패했습니다. 이미 사용 중인 이메일일 수 있습니다.')
     } finally {
       setLoading(false)
     }
