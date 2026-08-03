@@ -68,5 +68,9 @@ Task 3~16 모두 완료. 계획된 구현 끝.
 - [x] **Rate limiting (slowapi)** — 완료 (REST 전역 60/min, 로그인·회원가입 10/min, WS message.send 10/10초). 자동화 테스트, 멀티 서버 시나리오, 수동 브라우저 테스트(로그인 폼/채팅 메시지 연타 + 에러 메시지·토스트 노출)까지 전부 확인 완료
   - 스펙: `docs/superpowers/specs/2026-07-29-rate-limiting-design.md`
   - 계획: `docs/superpowers/plans/2026-07-29-rate-limiting.md`
-  - **알려진 이슈 (범위 밖, 후속 작업 필요)**: `nginx.conf`의 `upstream backend { server backend:8000; }`는 nginx가 시작될 때 `backend` 호스트명을 DNS로 딱 한 번만 해석해서 캐싱한다. `docker compose up --scale backend=2`로 인스턴스를 늘려도, nginx는 최초에 잡은 인스턴스 하나로만 계속 요청을 보내서 **실제로는 로드밸런싱이 안 되고 있음** (Rate limiting 멀티 서버 검증 중 발견 — 이번엔 nginx를 우회해서 두 backend 컨테이너에 직접 요청을 보내 Redis 카운터 공유 자체는 검증 완료했음). 고치려면 `resolver 127.0.0.11 valid=10s;` + 변수 기반 `proxy_pass`로 매 요청마다 DNS를 재해석하게 만들어야 함. 재연결/멀티탭 작업 때도 이 부분은 검증 범위에 없었던 것으로 보임.
+  - **알려진 이슈 (범위 밖, 후속 작업 필요, 2026-08-03 재검증 후 내용 정정)**: `nginx.conf`의 `upstream backend { server backend:8000; }`는 nginx가 시작될 때 `backend` 호스트명을 DNS로 딱 한 번만 해석해서 캐싱하고, 이후로는 재해석하지 않는다. 다만 실제로 문제가 드러나는 조건은 처음 문서화했을 때보다 좁다:
+    - `docker compose up --scale backend=N`처럼 **backend 컨테이너들이 먼저 뜨고 nginx가 그 다음에 시작**하는 경우 (nginx가 `depends_on: backend`), nginx가 시작 시점에 DNS를 조회하면 이미 존재하는 N개 컨테이너의 IP를 전부 받아와서 정상적으로 로드밸런싱함 — 직접 `/health`에 10회 요청 후 두 컨테이너 로그를 대조해 5:5 분산, nginx 컨테이너 내부 `ss -tn`으로 두 IP 모두에 연결돼 있음을 확인함
+    - 문제는 **nginx가 이미 떠 있는 상태에서 나중에 backend를 스케일하거나 컨테이너를 재생성**할 때 발생함. 이때 nginx는 재해석을 하지 않으므로 예전에 캐싱해둔 IP만 계속 사용함. 재현 시도 중, 도커 브릿지 네트워크의 좁은 IP 풀(172.18.0.x)이 해제된 IP를 순서대로 재사용하는 바람에 새로 뜬 컨테이너가 우연히 nginx가 캐싱해둔 IP를 그대로 이어받아 로드밸런싱이 계속 되는 것처럼 보이는 경우도 있었음 (`docker inspect`로 IP 재사용 확인) — 즉 이 조건에서 정상 동작하는 것처럼 보여도 IP 재사용이라는 우연에 기대고 있는 것이라 신뢰할 수 없음. 컨테이너가 많아지거나 IP 풀이 커지면 새 컨테이너가 완전히 새로운 IP를 받아 트래픽을 전혀 못 받는 상황이 재현될 수 있음
+    - 고치려면 `resolver 127.0.0.11 valid=10s;` + 변수 기반 `proxy_pass`로 매 요청(또는 주기적)마다 DNS를 재해석하게 만들어야 함 — 이 결론 자체는 여전히 유효함
+    - 재연결/멀티탭 작업 때도 이 부분은 검증 범위에 없었던 것으로 보임
 - [ ] **Locust 부하 테스트** — 예정, rate limiting 완료 후 브레인스토밍 시작
