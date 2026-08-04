@@ -28,7 +28,7 @@ def rate_limit_key(request: Request) -> str:
 
 limiter = Limiter(
     key_func=rate_limit_key,  # 동기 함수여야 함
-    default_limits=["60/minute"],
+    default_limits=[settings.DEFAULT_RATE_LIMIT],
     storage_uri=settings.REDIS_URL,
 )
 
