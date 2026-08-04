@@ -30,8 +30,11 @@ backend-alembic-migrate:
 up:
 	docker compose --env-file backend/.env.local up
 
-up-scaleup:
+up-backend-2:
 	docker compose --env-file backend/.env.local up --scale backend=2
+
+up-backend-3:
+	docker compose --env-file backend/.env.local up --scale backend=3
 
 up-build:
 	docker compose --env-file backend/.env.local up --build
