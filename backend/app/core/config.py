@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # Sentry
     SENTRY_DSN: str | None = None
     # rate limit
-    DEFAULT_RATE_LIMIT: str = "60/minute"
+    DEFAULT_RATE_LIMIT_BASE: str = "60/minute"
     AUTH_RATE_LIMIT_BASE: str = "10/minute"
 
     class Config:
@@ -51,6 +51,10 @@ class Settings(BaseSettings):
             redis_url += "/1"
 
         return redis_url
+
+    @property
+    def DEFAULT_RATE_LIMIT(self) -> str:
+        return "60/minute" if self.ENV == Environment.TEST else self.DEFAULT_RATE_LIMIT_BASE
 
     @property
     def AUTH_RATE_LIMIT(self) -> str:
