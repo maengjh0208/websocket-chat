@@ -78,7 +78,7 @@ async def websocket_endpoint(
             return
 
     # 연결 수락 + ConnectionManager 등록
-    await websocket.accept()
+    await websocket.accept()  # HTTP/1.1 101 Switching Protocols을 클라이언트에게 보내는 지점
     manager.connect(user.id, websocket)
     await presence.set_online(user.id)
     await _broadcast_presence(user_id=user.id, status=PresenceStatus.ONLINE, is_reconnect=True)
@@ -94,10 +94,10 @@ async def websocket_endpoint(
             except json.JSONDecodeError:
                 continue
 
-            async with get_session() as session:
-                msg_type = payload.get("type")
+            msg_type = payload.get("type")
 
-                if msg_type == WSMessageType.MESSAGE_SEND:
+            if msg_type == WSMessageType.MESSAGE_SEND:
+                async with get_session() as session:
                     if not ws_message_limiter.hit(MESSAGE_SEND_LIMIT, WSMessageType.MESSAGE_SEND, str(user.id)):
                         await manager.send_to_user(
                             user.id,
@@ -139,7 +139,8 @@ async def websocket_endpoint(
                             },
                         }
                     )
-                elif msg_type in (WSMessageType.TYPING_START, WSMessageType.TYPING_STOP):
+            elif msg_type in (WSMessageType.TYPING_START, WSMessageType.TYPING_STOP):
+                async with get_session() as session:
                     room_id = UUID(payload["room_id"])
                     is_typing = msg_type == WSMessageType.TYPING_START
                     member_ids = await crud_room.get_room_member_ids(session, room_id)
@@ -155,7 +156,8 @@ async def websocket_endpoint(
                             },
                         }
                     )
-                elif msg_type == WSMessageType.READ_UPDATE:
+            elif msg_type == WSMessageType.READ_UPDATE:
+                async with get_session() as session:
                     room_id = UUID(payload["room_id"])
 
                     await crud_room.update_last_read_at(
@@ -163,7 +165,8 @@ async def websocket_endpoint(
                         room_id=room_id,
                         user_id=user.id,
                     )
-                elif msg_type == WSMessageType.REACTION_TOGGLE:
+            elif msg_type == WSMessageType.REACTION_TOGGLE:
+                async with get_session() as session:
                     message_id = UUID(payload["message_id"])
                     emoji = str(payload.get("emoji", ""))
 
@@ -192,9 +195,9 @@ async def websocket_endpoint(
                             },
                         }
                     )
-                elif msg_type == WSMessageType.PING:
-                    await presence.set_online(user.id)
-                    await manager.send_to_user(user.id, {"type": WSMessageType.PONG})
+            elif msg_type == WSMessageType.PING:
+                await presence.set_online(user.id)
+                await manager.send_to_user(user.id, {"type": WSMessageType.PONG})
 
     # 클라이언트가 연결을 끊으면 WebSocketDisconnect 발생해서 except 로 빠짐
     except WebSocketDisconnect:
